@@ -1,0 +1,18 @@
+{% doc %}
+  Displays monetary and percentage savings for the selected variant.
+  @param {product} product - Product whose selected variant is priced.
+{% enddoc %}
+{%- assign variant = product.selected_or_first_available_variant -%}
+{%- if variant != blank and variant.compare_at_price > variant.price -%}
+  {%- liquid
+    assign savings = variant.compare_at_price | minus: variant.price
+    assign percentage = savings | times: 100.0 | divided_by: variant.compare_at_price | round
+    assign formatted_savings = savings | money
+    if settings.currency_code_enabled
+      assign formatted_savings = savings | money_with_currency
+    endif
+  -%}
+  <p class="assessment-sale-savings">
+    {{- 'assessment.sale_savings' | t: amount: formatted_savings, percentage: percentage -}}
+  </p>
+{%- endif -%}
