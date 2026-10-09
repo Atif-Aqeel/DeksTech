@@ -95,3 +95,98 @@ References: [Variant pricing](https://shopify.dev/docs/api/liquid/objects/varian
 The implementation displays currency-formatted monetary savings and a rounded percentage only when the selected variant's compare-at price exceeds its current price. Savings stay synchronized with variant selection through Dawn's existing price updates. The reported manual preview tests confirmed the required behavior.
 
 ---
+
+## 2. Collection Filtering & the Pagination Trap
+
+### Requirement
+
+Display only in-stock collection products, show 12 products per page, and keep pagination correct. Explain the common pagination issue.
+
+### Approach and assumptions
+
+Apply Shopify's native Availability filter before pagination. Availability is enabled in Shopify Search & Discovery for the assessment store. The tested in-stock collection view is:
+
+```text
+/collections/assessment-q2-stock-pagination?filter.v.availability=1
+```
+
+Use this filtered URL for the navigation entry intended to show only in-stock products. The assumption is that “in stock” means Shopify's native available-for-purchase status. For inventory-tracked test products, disable continuing to sell when out of stock. Products with untracked inventory or continue-selling enabled may still be available at zero physical stock.
+
+Shopify filters the collection on the server before Liquid paginates `collection.products`. Reuse Dawn's existing product cards, filter controls, sorting, and pagination links. The final page can contain fewer than 12 products.
+
+### Implementation
+
+The product grid in `templates/collection.json` is configured with `"products_per_page": 12`. In `sections/main-collection-product-grid.liquid`, the setting has the following schema:
+
+```json
+{
+  "type": "range",
+  "id": "products_per_page",
+  "min": 8,
+  "max": 36,
+  "step": 4,
+  "default": 12,
+  "label": "t:sections.main-collection-product-grid.settings.products_per_page.label"
+}
+```
+
+The inherited rendering remains:
+
+```liquid
+{%- paginate collection.products by section.settings.products_per_page -%}
+  {%- for product in collection.products -%}
+    {% render 'card-product',
+      card_product: product,
+      media_aspect_ratio: section.settings.image_ratio,
+      image_shape: section.settings.image_shape,
+      show_secondary_image: section.settings.show_secondary_image,
+      show_vendor: section.settings.show_vendor,
+      show_rating: section.settings.show_rating,
+      lazy_load: lazy_load,
+      skip_styles: skip_card_product_styles,
+      quick_add: section.settings.quick_add,
+      section_id: section.id
+    %}
+  {%- endfor -%}
+  {%- if paginate.pages > 1 -%}
+    {% render 'pagination', paginate: paginate, anchor: '' %}
+  {%- endif -%}
+{%- endpaginate -%}
+```
+
+The code above is an excerpt of the existing structure; the actual loop renders `card-product` with Dawn's image, layout, and quick-add settings. No availability condition is added inside the product loop. Dawn's `pagination` snippet uses Shopify-generated `paginate.previous.url`, `part.url`, and `paginate.next.url`; it does not rebuild links using only a page number. Dawn's facet handling carries selected filter values into sorting requests.
+
+### The pagination trap
+
+If a page is first paginated into 12 products and then six sold-out products are skipped, it displays only six cards. Page counts still reflect the unfiltered collection, and later pages can be empty even though available products exist elsewhere. CSS hiding or browser-side removal has the same counting problem.
+
+A Liquid `where: 'available', true` array is not a substitute for native full-collection filtering and supported collection pagination. Filtering must determine the result set before page boundaries and totals are calculated.
+
+### Edge cases and considerations
+
+- Availability must be configured in Shopify Admin; a URL parameter alone does not establish the required store configuration.
+- The plain collection URL and removal of the Availability filter show the ordinary collection. This solution provides an explicitly filtered in-stock view; it does not permanently restrict every collection request. If the merchant requires an always-restricted listing, use a separately maintained collection whose membership follows the agreed stock rule.
+- Preserve the availability parameter when paging and sorting. Reset to page 1 when changing filters.
+- Shopify's native filtering has collection-size limits; confirm eligibility before applying this approach to a very large catalog.
+- Keep the section's products-per-page setting at 12. The editor setting remains configurable.
+
+### Verification
+
+Shopify Theme Check passed the collection template and product-grid section with no warnings or errors. Static inspection confirmed that Dawn paginates `collection.products` before rendering cards and uses Shopify-generated pagination URLs.
+
+Manual testing was completed by Atif Aqeel on October 10, 2026, in the development preview. The assessment collection contains 30 imported test products: 25 available and 5 sold out. The guided tests were reported successful and covered:
+
+- The in-stock view across three pages, with expected page sizes of 12, 12, and 1.
+- Availability retained in the supplied pagination URLs.
+- Filtering, sorting, and page refresh using Dawn's existing collection controls.
+- An additional out-of-stock view using `filter.v.availability=0` with title-ascending sorting; the test data contains 5 sold-out products.
+
+The reusable import file is `test-data/q2-products.csv`. It contains unique product handles, inventory tracking, and a deny-selling policy for zero-stock products.
+
+Reference: [Shopify storefront filtering](https://shopify.dev/docs/storefronts/themes/navigation-search/filtering/storefront-filtering).
+
+### Result
+
+Question 2 is complete for the availability-filtered collection view. Shopify filters eligible products before pagination, allowing full pages of 12 products and a shorter final page without counting sold-out products in the in-stock result set. The standard unfiltered collection remains accessible.
+
+---

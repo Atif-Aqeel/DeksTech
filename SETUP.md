@@ -26,3 +26,9 @@ Shopify Dev MCP revalidated the corrected snippet: valid, with no warnings or er
 ## Preview upload repairs
 
 The first user-run preview reported two inherited Liquid syntax errors. Both Wishlist Hero render calls in `snippets/card-product.liquid` now use comma-separated named arguments. `snippets/product-variant-options.liquid` now escapes the swatch value in an assignment before passing it to `render`. Shopify Theme Check passed both repaired files with no warnings or errors. Atif subsequently reported completion of the guided preview tests.
+
+## Question 2
+
+Status: complete for the agreed native availability-filtered view, based on Theme Check and user-reported manual testing. Store-side Availability and test data are configured. Theme configuration, test data, and documentation are maintained as separate commits.
+
+Configured collection page size and section default to 12, retaining Dawn's native filtering and pagination. Shopify Theme Check passed both changed files with no warnings or errors; JSON parsing and `git diff --check` passed. Atif enabled Availability, created the collection and products, added a header shortcut, and reported completing the guided tests on October 10, 2026. Supplied preview URLs cover the in-stock pages and an out-of-stock sorted view; detailed evidence limits are recorded in `TESTING.md`. The implementation's in-stock scope is the native filtered URL, not every unfiltered collection request.

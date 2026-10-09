@@ -49,3 +49,38 @@ In DevTools Elements, inspect `.assessment-sale-savings` inside `#price-SECTION_
 - User-reported pass: sale 20%, rounding down to 33%, rounding up to 67%, blank compare-at, free sale variant, sale/regular switching without refresh, direct variant URL, and sold-out sale variant with purchasing unavailable.
 - Evidence source: Atif's confirmation after the guided test checklist, October 10, 2026. These were manual user-run tests; the assistant did not independently observe the browser. Exact product URL and preview theme ID were not supplied.
 - Not separately confirmed: equal/lower compare-at values, rapid switching, currency-code toggle, mobile layout, and console inspection. Do not represent these additional cases as passed.
+
+## Question 2: in-stock collection pagination
+
+Atif reported completing all guided cases on October 10, 2026. This is user-reported manual verification; the assistant did not independently observe the browser. Individual counts, screenshots, and pass/fail records were not supplied.
+
+1. In Shopify Search & Discovery, enable the Availability storefront filter. This is store configuration and is not deployed with the theme files.
+2. Create a dedicated manual collection with 30 Online Store products: 25 available and 5 fully sold out. For sold-out products, track inventory, set all variants to zero, and disable continue selling. Interleave sold-out products with available products in manual order so the test exposes filtering after pagination.
+3. In the development preview, open `/collections/YOUR_HANDLE?filter.v.availability=1`. Preserve any preview parameters if constructing the URL yourself.
+4. Confirm only In stock is selected, and the product-grid setting is 12 in the Theme Editor. Wait for Shopify's filter data to update if products were just edited.
+
+| Check | Expected |
+|---|---|
+| Page 1 | 12 available product cards |
+| Page 2 | 12 available product cards |
+| Page 3 | 1 available product card |
+| Product count | 25 filtered products, not 30 |
+| All pages combined | 25 distinct products; none sold out or duplicated |
+| Pagination URLs | Retain `filter.v.availability=1` |
+| Sorting | Availability stays selected and totals remain 25 |
+| Change another filter on page 2 | Return to page 1 of the new result set |
+| No available matches | Empty state, no misleading page links |
+| Fewer than 12 available matches | All matches on one page |
+| Remove availability filter | Ordinary mixed-stock collection returns; this is outside the in-stock view |
+
+Test mobile filtering, browser Back/Forward, and page refresh while the availability filter is active. Record actual counts, URLs, and pass/fail. Configure any navigation entry for this in-stock view to use the filtered URL. Do not claim the plain collection URL is permanently restricted.
+
+### Reported results
+
+Question 2 is recorded as complete for the native in-stock filtered view, based on Atif's confirmation. The test fixture is `test-data/q2-products.csv`: 30 unique products, 25 with quantity 10 and 5 with quantity 0. CSV structure and stock counts were checked locally before import. Product CSV inventory quantities apply to single-location stores; location inventory should be checked separately when reusing the fixture in a multi-location store.
+
+- Availability enabled in Shopify Search & Discovery; collection and imported products created; a header shortcut added.
+- User supplied local preview URLs for the in-stock first page, page 2, and page 3 on `http://127.0.0.1:9292/collections/assessment-q2-stock-pagination`, retaining `filter.v.availability=1`.
+- User also supplied `filter.v.availability=0` with `sort_by=title-ascending`. This selects out-of-stock products, for which the fixture expects 5 results on one page. It is not URL evidence of sorting while retaining the in-stock filter.
+- Expected in-stock results remain 25 products across pages of 12, 12, and 1. User stated “tested all cases”; no failures were reported. Actual individual counts were not separately supplied.
+- Header shortcut destination was not supplied; its inclusion of the in-stock parameter is not independently verified.
