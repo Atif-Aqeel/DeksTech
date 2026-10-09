@@ -6,7 +6,8 @@
 {%- if variant != blank and variant.compare_at_price > variant.price -%}
   {%- liquid
     assign savings = variant.compare_at_price | minus: variant.price
-    assign percentage = savings | times: 100.0 | divided_by: variant.compare_at_price | round
+    assign compare_at_float = variant.compare_at_price | times: 1.0
+    assign percentage = savings | times: 100 | divided_by: compare_at_float | round
     assign formatted_savings = savings | money
     if settings.currency_code_enabled
       assign formatted_savings = savings | money_with_currency
