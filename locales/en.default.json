@@ -1,6 +1,8 @@
 {
   "assessment": {
-    "sale_savings": "Save {{ amount }} ({{ percentage }}%)"
+    "sale_savings": "Save {{ amount }} ({{ percentage }}%)",
+    "cart_add_uncertain": "The cart request could not be confirmed. Check your cart before trying again.",
+    "cart_added_refresh_error": "Added to your cart, but the cart display could not be updated. Open your cart to review it."
   },
   "general": {
     "password_page": {
