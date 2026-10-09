@@ -3,8 +3,8 @@
 - Work is confined to this Dawn project; the separate wishlist application is outside scope.
 - Workspace writes succeeded when creating the assessment snippet and documents.
 - Theme metadata: Dawn 15.2.0.
-- Git branch: `main`; no commits. Original theme directories are untracked.
-- Remote: `https://github.com/Atif-Aqeel/DeksTech.git`. Remote access and visibility have not been verified; GitHub CLI was not found.
+- Git branch: `main`, tracking `origin/main`. Separate baseline, Question 1, and documentation commits were pushed successfully.
+- Remote: `https://github.com/Atif-Aqeel/DeksTech.git`. Push access is verified; repository visibility has not been checked. GitHub CLI was not found.
 - Shopify CLI: 4.8.0. Node is available.
 - Shopify Dev MCP is available and was initialized for Liquid in this session.
 - No applicable AGENTS.md was found in the workspace or checked ancestor directories.
@@ -13,8 +13,16 @@
 
 ## Validation and setup gaps
 
-The first read-only store theme-list attempt failed because the sandbox denied a Shopify CLI configuration write outside the workspace. The escalated retry succeeded. Target-store confirmation, test-data preparation, and browser testing remain pending.
+The first read-only store theme-list attempt failed because the sandbox denied a Shopify CLI configuration write outside the workspace. The escalated retry succeeded. Atif subsequently ran the development preview and reported successful Question 1 testing on October 10, 2026. The exact preview theme ID and product URL were not supplied.
 
 Shopify Dev MCP Theme Check validated the three changed theme files with no errors. The new savings snippet and English locale file passed all checks. The main product section retained two findings in inherited code: unused `seo_media` and an unknown `continue` object. These findings are outside the added savings implementation.
 
-Question 1 storefront acceptance cases are documented in `ASSESSMENT.md`. Static validation cannot substitute for those checks.
+Question 1 storefront acceptance cases are documented in `TESTING.md`. Static validation cannot substitute for those checks. `ASSESSMENT.md` contains submission content only; unanswered question placeholders were removed and will be replaced with completed answers as work progresses.
+
+Question 1 arithmetic review identified that Liquid division follows the divisor type. The snippet now converts the compare-at price to a float before dividing so rounding can correctly round up as well as down.
+
+Shopify Dev MCP revalidated the corrected snippet: valid, with no warnings or errors. `git diff --check` also passed. User-run development-preview results are recorded in `TESTING.md`.
+
+## Preview upload repairs
+
+The first user-run preview reported two inherited Liquid syntax errors. Both Wishlist Hero render calls in `snippets/card-product.liquid` now use comma-separated named arguments. `snippets/product-variant-options.liquid` now escapes the swatch value in an assignment before passing it to `render`. Shopify Theme Check passed both repaired files with no warnings or errors. Atif subsequently reported completion of the guided preview tests.

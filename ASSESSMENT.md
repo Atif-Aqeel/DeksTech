@@ -1,14 +1,20 @@
 # Shopify Theme Dev Assessment — Atif Aqeel
 
-Draft submission. Written answers and code are the primary deliverable; this Dawn project provides supporting implementations. Only Question 1 has been implemented so far. No submission format or deadline has been confirmed.
+
 
 ## 1. Liquid Output, Money Filters & Sale Logic
+
+### Requirement
+
+Display the monetary amount and percentage saved when a product is on sale. Show neither when the compare-at price does not exceed the current price. Provide Liquid.
 
 ### Approach and assumptions
 
 Use the selected variant, falling back to the first available variant, so the saving compares prices from the same variant. Display savings only when its compare-at price exceeds its current price. This is a catalog sale comparison, not a calculation of automatic discounts or discount codes. Dollar examples assume a USD storefront; money filters respect the customer's presentment currency and the theme's currency-code setting.
 
-### Actual implementation
+Monetary savings = compare-at price − current price. Percentage saved = monetary savings ÷ compare-at price × 100, rounded to the nearest whole number. For example, a $100 compare-at price and $80 current price produce $20 savings and 20% saved.
+
+### Implementation
 
 Source: `snippets/assessment-sale-savings.liquid`.
 
@@ -21,7 +27,8 @@ Source: `snippets/assessment-sale-savings.liquid`.
 {%- if variant != blank and variant.compare_at_price > variant.price -%}
   {%- liquid
     assign savings = variant.compare_at_price | minus: variant.price
-    assign percentage = savings | times: 100.0 | divided_by: variant.compare_at_price | round
+    assign compare_at_float = variant.compare_at_price | times: 1.0
+    assign percentage = savings | times: 100 | divided_by: compare_at_float | round
     assign formatted_savings = savings | money
     if settings.currency_code_enabled
       assign formatted_savings = savings | money_with_currency
@@ -60,7 +67,7 @@ Dawn's inherited `assets/product-info.js` replaces the contents of this price re
 ### Edge cases and considerations
 
 - Missing, equal, or lower compare-at prices produce no savings output. The guard also prevents division by zero for valid nonnegative Shopify prices.
-- Multiply by `100.0` before division to retain fractional arithmetic; round only the final percentage to a whole number.
+- Convert the compare-at price to a float before division, because Liquid division follows the divisor type. Round only the final percentage to a whole number.
 - A zero-price variant with a positive compare-at price shows 100% savings.
 - A sold-out variant can still have sale pricing; availability and sale status are separate conditions.
 - Very small discounts can round to 0%; one decimal place can be used if the merchant prefers.
@@ -68,46 +75,23 @@ Dawn's inherited `assets/product-info.js` replaces the contents of this price re
 
 ### Verification
 
-Static inspection confirmed placement inside Dawn's existing variant price update region. Shopify Theme Check passed the snippet and English locale file; the main product section passed with two warnings in inherited code (unused `seo_media` and unknown `continue`). Storefront rendering, currency formatting, and live variant switching have not yet been tested. Setup results are recorded in `SETUP.md`.
+Shopify Theme Check passed the savings snippet and English locale file with no errors. The main product section passed with two warnings in inherited Dawn code.
 
-Pending storefront cases: $100 → $80 shows $20 / 20%; $30 → $20 shows $10 / 33%; equal prices, lower compare-at price, or absent compare-at price hide the message; sale → regular variant switching removes it.
+Manual development-preview testing was completed and reported successful by Atif Aqeel on October 10, 2026:
 
-Reference: [Shopify Liquid variant](https://shopify.dev/docs/api/liquid/objects/variant).
+- $100 compare-at / $80 price: $20 savings and 20%.
+- $30 compare-at / $20 price: $10 savings and 33%.
+- $30 compare-at / $10 price: $20 savings and 67%.
+- No compare-at price: no savings message.
+- $100 compare-at / $0 price: $100 savings and 100%.
+- Switching between sale and regular variants updated or removed the savings without reloading the page.
+- Opening a direct variant URL displayed the selected variant's pricing and savings.
+- A sold-out sale variant retained its savings while purchasing was unavailable.
 
-## 2. Collection Filtering & the Pagination Trap
+References: [Variant pricing](https://shopify.dev/docs/api/liquid/objects/variant), [Liquid division](https://shopify.dev/docs/api/liquid/filters/divided_by).
 
-Pending. Apply native availability filtering before paginating 12 products. Explain why hiding sold-out products inside a paginated loop produces sparse pages and incorrect totals. Confirm store filter configuration and parameter preservation.
+### Result
 
-## 3. Section Schema with Settings & Repeatable Blocks
+The implementation displays currency-formatted monetary savings and a rounded percentage only when the selected variant's compare-at price exceeds its current price. Savings stay synchronized with variant selection through Dawn's existing price updates. The reported manual preview tests confirmed the required behavior.
 
-Pending. Implement heading, background, padding range 0–100px, repeatable image/caption blocks, preset, responsive images, and Theme Editor block attributes.
-
-## 4. AJAX Cart & Section Rendering API
-
-Pending. Reuse Dawn cart handling; document locale-aware routes, header section IDs, duplicate-submit prevention, errors, and safe recovery when section rendering fails after a successful cart mutation.
-
-## 5. Theme Editor Lifecycle Events
-
-Pending. Explain section DOM replacement; implement initialization and teardown, section load/unload, and block selection/deselection handling without duplicate initialization.
-
-## 6. Per-Instance CSS Without Style Bleed
-
-Pending. Demonstrate two independently configured instances using section-scoped styles or wrapper CSS variables. Share the Question 3 section where appropriate.
-
-## 7. Integrated Build – AJAX Variant / Size Selector
-
-Pending. Provide a complete Size-only component for a small variant set with genuinely disabled sold-out choices, synchronized form ID, price, availability, and URL while preserving other URL parameters. Identify inherited Dawn behavior and explain multi-option/high-variant limitations.
-
-## 8. Metafields: Definition, Rendering & References
-
-Pending. Define merchant-owned rich-text `custom.care_instructions` and a separate product-reference relationship. Render both current and referenced product instructions, resolving `.value` and guarding missing data.
-
-## 9. Metaobjects vs. Metafields
-
-Pending. Configure a reusable Designer entity with name, bio, photo, and country; assign via a product metaobject-reference metafield; render a paginated Our Designers listing. Document storefront access and publication prerequisites.
-
-## 10. Performance Debugging & Technical Judgment
-
-Pending. Write a measured investigation plan covering browser and server costs, app functionality, nested loops, and unnecessary variant payloads. Do not invent measurements or recreate the six-app scenario.
-
-Each remaining answer will include approach, necessary assumptions, actual final code, edge cases, and verification performed.
+---
