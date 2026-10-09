@@ -84,3 +84,36 @@ Question 2 is recorded as complete for the native in-stock filtered view, based 
 - User also supplied `filter.v.availability=0` with `sort_by=title-ascending`. This selects out-of-stock products, for which the fixture expects 5 results on one page. It is not URL evidence of sorting while retaining the in-stock filter.
 - Expected in-stock results remain 25 products across pages of 12, 12, and 1. User stated “tested all cases”; no failures were reported. Actual individual counts were not separately supplied.
 - Header shortcut destination was not supplied; its inclusion of the in-stock parameter is not independently verified.
+
+## Question 3: configurable Feature section
+
+Atif reported completing the guided Theme Editor and development-preview tests on October 10, 2026, with no failures reported. The instructions below are retained for repeat testing. Keep `shopify theme dev` running and use its Theme Editor link (press `e` if supported by the running CLI). Ensure you are editing the development theme containing the local files.
+
+1. Open the Home page in the Theme Editor. Choose Add section → Assessment features. Place it below the main banner. The preset should create three Feature blocks.
+2. Set the heading to **Why choose us**, background to **#f3f8ff**, and vertical padding to **40px**.
+3. Add images and captions: **Quality materials**, **Thoughtful design**, and **Reliable delivery**. Set meaningful alt text for the images. Save and inspect the development preview.
+
+| Check | Expected |
+|---|---|
+| Heading edit | New text displayed |
+| Background edit | Only this instance changes |
+| Padding 0, 40, 100 | Computed top/bottom padding is exactly 0px, 40px, 100px |
+| Add fourth Feature | Fourth card appears |
+| Reorder blocks | Preview order matches editor order |
+| Remove a block | Its card disappears |
+| Select a block | Editor identifies the corresponding card |
+| Clear heading/caption | Empty text element omitted |
+| Remove image | No broken image; caption remains |
+| Remove all blocks | No grid or errors; section remains editable |
+| Long caption | Text wraps without horizontal overflow |
+| Mobile/tablet/desktop | 1/2/3 columns respectively |
+| Save and refresh | Values and block order persist |
+
+For an instance-isolation check, add Assessment features a second time with heading **More benefits**, background **#fff4e5**, and padding **80px**. Changing the first section must not change the second. This also prepares the Question 6 demonstration.
+
+### Reported results
+
+- Question 3 is complete based on static validation and Atif's confirmation of successful guided testing.
+- Reported coverage: heading/background edits, padding at 0/40/100px, images/captions, adding/removing/reordering blocks, mobile/desktop layout, and independent settings for two instances.
+- Static validation passed both new/updated theme files with no warnings or errors.
+- Evidence source: user-run manual testing. The assistant did not independently observe the browser; screenshots, computed-style readings, and per-case results were not supplied. Additional edge-case checks in the table have no separately recorded outcome.

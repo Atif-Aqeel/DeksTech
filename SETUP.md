@@ -32,3 +32,9 @@ The first user-run preview reported two inherited Liquid syntax errors. Both Wis
 Status: complete for the agreed native availability-filtered view, based on Theme Check and user-reported manual testing. Store-side Availability and test data are configured. Theme configuration, test data, and documentation are maintained as separate commits.
 
 Configured collection page size and section default to 12, retaining Dawn's native filtering and pagination. Shopify Theme Check passed both changed files with no warnings or errors; JSON parsing and `git diff --check` passed. Atif enabled Availability, created the collection and products, added a header shortcut, and reported completing the guided tests on October 10, 2026. Supplied preview URLs cover the in-stock pages and an out-of-stock sorted view; detailed evidence limits are recorded in `TESTING.md`. The implementation's in-stock scope is the native filtered URL, not every unfiltered collection request.
+
+## Question 3
+
+Status: complete based on Theme Check and user-reported guided testing on October 10, 2026.
+
+Implemented `sections/assessment-features.liquid` with heading, background, 0–100px vertical padding, repeatable image/caption blocks, responsive grid, per-instance CSS variables, and a three-block preset. Added editor label translations to `locales/en.default.schema.json`. Shopify Theme Check passed both files without warnings or errors. Atif reported successful Theme Editor and development-preview testing, including independent section instances. Evidence details are recorded in `TESTING.md`. The section is added through the Theme Editor; no template insertion is required in the source implementation.

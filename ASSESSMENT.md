@@ -190,3 +190,206 @@ Reference: [Shopify storefront filtering](https://shopify.dev/docs/storefronts/t
 Question 2 is complete for the availability-filtered collection view. Shopify filters eligible products before pagination, allowing full pages of 12 products and a shorter final page without counting sold-out products in the in-stock result set. The standard unfiltered collection remains accessible.
 
 ---
+
+## 3. Section Schema with Settings & Repeatable Blocks
+
+### Requirement
+
+Create a section schema with a heading text field, background color picker, padding slider from 0–100px, and repeatable Feature blocks containing an image and caption. Show how padding is output and blocks are rendered in Liquid.
+
+### Approach and assumptions
+
+Use a dedicated OS 2.0 section, `sections/assessment-features.liquid`, with a preset so merchants can add it through the Theme Editor. Padding applies equally to the top and bottom; Dawn's `page-width` class provides horizontal gutters. Each Feature renders in a responsive grid with one column on mobile, two on tablet, and three on desktop.
+
+The heading and captions are plain text and are escaped. Images use Shopify's responsive image filters and retain their aspect ratio. Merchants should supply meaningful image alt text and choose a background with sufficient contrast against the inherited theme text color. The component is intended for supporting content below the first viewport, so images are lazy-loaded.
+
+### Implementation
+
+Complete section source:
+
+```liquid
+<div
+  class="assessment-features"
+  style="--feature-background: {{ section.settings.background_color }}; --feature-padding: {{ section.settings.padding }}px;"
+>
+  <div class="page-width">
+    {%- if section.settings.heading != blank -%}
+      <h2 class="assessment-features__heading">{{ section.settings.heading | escape }}</h2>
+    {%- endif -%}
+    {%- if section.blocks.size > 0 -%}
+      <ul class="assessment-features__grid" role="list">
+        {%- for block in section.blocks -%}
+          <li class="assessment-features__item" {{ block.shopify_attributes }}>
+            <figure class="assessment-features__figure">
+              {%- if block.settings.image != blank -%}
+                {{
+                  block.settings.image
+                  | image_url: width: 1200
+                  | image_tag:
+                    widths: '240, 360, 540, 720, 960, 1200',
+                    sizes: '(min-width: 990px) 30vw, (min-width: 750px) 45vw, 90vw',
+                    loading: 'lazy',
+                    class: 'assessment-features__image'
+                }}
+              {%- endif -%}
+              {%- if block.settings.caption != blank -%}
+                <figcaption class="assessment-features__caption">{{ block.settings.caption | escape }}</figcaption>
+              {%- endif -%}
+            </figure>
+          </li>
+        {%- endfor -%}
+      </ul>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .assessment-features {
+    background-color: var(--feature-background);
+    padding-block: var(--feature-padding);
+  }
+
+  .assessment-features__heading {
+    margin: 0 0 2.4rem;
+  }
+
+  .assessment-features__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .assessment-features__item {
+    min-width: 0;
+  }
+
+  .assessment-features__figure {
+    margin: 0;
+  }
+
+  .assessment-features__image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .assessment-features__caption {
+    margin-top: 1.2rem;
+    overflow-wrap: anywhere;
+  }
+
+  @media screen and (min-width: 750px) {
+    .assessment-features__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media screen and (min-width: 990px) {
+    .assessment-features__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:assessment_features.name",
+  "tag": "section",
+  "class": "assessment-features-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:assessment_features.heading",
+      "default": "Our features"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:assessment_features.background_color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "t:assessment_features.padding",
+      "default": 40
+    }
+  ],
+  "blocks": [
+    {
+      "type": "feature",
+      "name": "t:assessment_features.feature",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:assessment_features.image"
+        },
+        {
+          "type": "text",
+          "id": "caption",
+          "label": "t:assessment_features.caption"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:assessment_features.name",
+      "blocks": [
+        { "type": "feature" },
+        { "type": "feature" },
+        { "type": "feature" }
+      ]
+    }
+  ]
+}
+{% endschema %}
+```
+
+The following keys are added at the root of `locales/en.default.schema.json` for the editor labels:
+
+```json
+"assessment_features": {
+  "name": "Assessment features",
+  "heading": "Heading",
+  "background_color": "Background color",
+  "padding": "Vertical padding",
+  "feature": "Feature",
+  "image": "Image",
+  "caption": "Caption"
+}
+```
+
+The padding setting is output as `--feature-padding: {{ section.settings.padding }}px` on the section's wrapper. Static CSS consumes this with `padding-block: var(--feature-padding)`. Liquid values are output in the HTML rather than inside `{% stylesheet %}`, where Liquid is not evaluated.
+
+The `section.blocks` loop renders each Feature in merchant-defined order. `block.shopify_attributes` on each list item allows the Theme Editor to identify, select, and reorder blocks. Background and padding variables are set on each instance's wrapper, allowing independent settings when the section is added twice. No JavaScript is needed.
+
+### Edge cases and considerations
+
+- A blank heading or caption produces no empty text element.
+- An unset image produces no broken image request; a caption can still render.
+- With no blocks, the grid is omitted while the section's heading and settings remain usable.
+- Long captions can wrap without overflowing the grid.
+- Image dimensions and responsive sources are generated by `image_tag`; the image picker supplies the image resource.
+- The slider applies the exact selected vertical padding, including 0px and 100px.
+
+### Verification
+
+Shopify Theme Check passed the section and English schema locale file with no warnings or errors.
+
+Atif Aqeel reported successful completion of the guided Theme Editor and development-preview tests on October 10, 2026. Testing covered editing the heading and background, setting padding to 0px, 40px, and 100px, adding images and captions, adding/removing/reordering Feature blocks, checking mobile and desktop layouts, and verifying that two section instances retain independent settings.
+
+### Result
+
+Question 3 is complete. The section provides all requested settings and repeatable Feature blocks, with explicit Liquid output for padding and block rendering. It is available through the Theme Editor's Add section menu as Assessment features, and the guided manual tests were reported successful.
+
+---
