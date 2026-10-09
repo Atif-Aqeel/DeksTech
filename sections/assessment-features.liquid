@@ -1,0 +1,145 @@
+<div
+  class="assessment-features"
+  style="--feature-background: {{ section.settings.background_color }}; --feature-padding: {{ section.settings.padding }}px;"
+>
+  <div class="page-width">
+    {%- if section.settings.heading != blank -%}
+      <h2 class="assessment-features__heading">{{ section.settings.heading | escape }}</h2>
+    {%- endif -%}
+    {%- if section.blocks.size > 0 -%}
+      <ul class="assessment-features__grid" role="list">
+        {%- for block in section.blocks -%}
+          <li class="assessment-features__item" {{ block.shopify_attributes }}>
+            <figure class="assessment-features__figure">
+              {%- if block.settings.image != blank -%}
+                {{
+                  block.settings.image
+                  | image_url: width: 1200
+                  | image_tag:
+                    widths: '240, 360, 540, 720, 960, 1200',
+                    sizes: '(min-width: 990px) 30vw, (min-width: 750px) 45vw, 90vw',
+                    loading: 'lazy',
+                    class: 'assessment-features__image'
+                }}
+              {%- endif -%}
+              {%- if block.settings.caption != blank -%}
+                <figcaption class="assessment-features__caption">{{ block.settings.caption | escape }}</figcaption>
+              {%- endif -%}
+            </figure>
+          </li>
+        {%- endfor -%}
+      </ul>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .assessment-features {
+    background-color: var(--feature-background);
+    padding-block: var(--feature-padding);
+  }
+
+  .assessment-features__heading {
+    margin: 0 0 2.4rem;
+  }
+
+  .assessment-features__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .assessment-features__item {
+    min-width: 0;
+  }
+
+  .assessment-features__figure {
+    margin: 0;
+  }
+
+  .assessment-features__image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .assessment-features__caption {
+    margin-top: 1.2rem;
+    overflow-wrap: anywhere;
+  }
+
+  @media screen and (min-width: 750px) {
+    .assessment-features__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media screen and (min-width: 990px) {
+    .assessment-features__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:assessment_features.name",
+  "tag": "section",
+  "class": "assessment-features-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:assessment_features.heading",
+      "default": "Our features"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:assessment_features.background_color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "t:assessment_features.padding",
+      "default": 40
+    }
+  ],
+  "blocks": [
+    {
+      "type": "feature",
+      "name": "t:assessment_features.feature",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:assessment_features.image"
+        },
+        {
+          "type": "text",
+          "id": "caption",
+          "label": "t:assessment_features.caption"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:assessment_features.name",
+      "blocks": [
+        { "type": "feature" },
+        { "type": "feature" },
+        { "type": "feature" }
+      ]
+    }
+  ]
+}
+{% endschema %}

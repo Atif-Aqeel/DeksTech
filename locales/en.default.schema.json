@@ -1,4 +1,13 @@
 {
+  "assessment_features": {
+    "name": "Assessment features",
+    "heading": "Heading",
+    "background_color": "Background color",
+    "padding": "Vertical padding",
+    "feature": "Feature",
+    "image": "Image",
+    "caption": "Caption"
+  },
   "settings_schema": {
     "global": {
       "settings": {
