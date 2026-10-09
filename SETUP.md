@@ -38,3 +38,11 @@ Configured collection page size and section default to 12, retaining Dawn's nati
 Status: complete based on Theme Check and user-reported guided testing on October 10, 2026.
 
 Implemented `sections/assessment-features.liquid` with heading, background, 0–100px vertical padding, repeatable image/caption blocks, responsive grid, per-instance CSS variables, and a three-block preset. Added editor label translations to `locales/en.default.schema.json`. Shopify Theme Check passed both files without warnings or errors. Atif reported successful Theme Editor and development-preview testing, including independent section instances. Evidence details are recorded in `TESTING.md`. The section is added through the Theme Editor; no template insertion is required in the source implementation.
+
+## Question 4
+
+Status: complete based on static validation, six automated tests, and Atif's successful guided manual-testing report on October 10, 2026.
+
+Final review confirmed that the full JavaScript in ASSESSMENT.md matches assets/product-form.js. JavaScript syntax and git diff whitespace checks passed. No required implementation work remains for Question 4; detailed test coverage and limits remain in TESTING.md.
+
+Extended Dawn's existing product-form handler with bundled section validation, one read-only recovery request, duplicate-submit protection, visible errors, and no cart-page redirect. Added translated messages through cartStrings in the layout. JavaScript syntax and six mocked automated tests passed. Theme Check passed the JS and locale file; the layout retains one inherited warning for scheme_classes. Manual results and evidence limits are recorded in TESTING.md. No duplicate product/cart submit handler was added.

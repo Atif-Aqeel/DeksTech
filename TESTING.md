@@ -117,3 +117,59 @@ For an instance-isolation check, add Assessment features a second time with head
 - Reported coverage: heading/background edits, padding at 0/40/100px, images/captions, adding/removing/reordering blocks, mobile/desktop layout, and independent settings for two instances.
 - Static validation passed both new/updated theme files with no warnings or errors.
 - Evidence source: user-run manual testing. The assistant did not independently observe the browser; screenshots, computed-style readings, and per-case results were not supplied. Additional edge-case checks in the table have no separately recorded outcome.
+
+## Question 4: AJAX cart and header count
+
+Atif reported successful completion of the guided development-preview tests on October 10, 2026. Six automated tests also passed with `node --test tests/q4-cart.test.cjs`; these mock requests and DOM elements. The instructions below are retained for repeat testing.
+
+Keep the development preview running. Use a product with two available variants and known inventory. Set Cart type to Notification, then repeat in Drawer mode. Empty the session cart through the normal cart UI. Open DevTools Network with Preserve log enabled.
+
+| Action | Expected |
+|---|---|
+| Select variant A; add quantity 1 | No reload; header shows 1; correct variant in cart |
+| Add quantity 2 of variant A | Header shows 3; same variant totals 3 |
+| Add quantity 1 of variant B | Header shows 4, not 2 distinct lines |
+| Double-click with Slow 3G enabled | One add POST while pending; quantity added once |
+| Request more units than available | Inventory error shown; controls recover |
+| Correct quantity after rejection | Subsequent intentional add succeeds |
+| Block cart/add.js request in DevTools | Uncertain-outcome warning; spinner stops; no automatic retry |
+| Close cart with Escape | Normal Dawn focus behavior retained |
+| Repeat in Notification and Drawer modes | Header and cart UI update in both modes |
+| Cart page mode | Header updates without redirecting; no popup expected |
+
+For inventory rejection, use a variant with quantity 1, continue-selling disabled, and request quantity 2 from an empty cart. Inspect the actual cart after rejection: Shopify can partially fulfill an over-stock request. Do not assume a rejected request never changed the cart.
+
+Inspect the add request in Network: `id` is the selected variant, `quantity` is correct, `sections` includes `cart-icon-bubble`, and `sections_url` begins with `/`. A successful response contains section HTML. There should be no document navigation.
+
+### Missing-section recovery
+
+On the development product page, run the following console script before adding once. It simulates missing HTML after a real successful add:
+
+```javascript
+window.q4OriginalFetch = window.fetch;
+window.fetch = async (...args) => {
+  const response = await window.q4OriginalFetch(...args);
+  if (String(args[0]).includes('/cart/add.js') && response.ok) {
+    const state = await response.clone().json();
+    if (state.sections) state.sections['cart-icon-bubble'] = null;
+    return new Response(JSON.stringify(state), {
+      status: response.status,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  return response;
+};
+```
+
+Expected: one add POST and one recovery GET containing `sections=...`; cart UI and header recover, and quantity increases once. Restore with `window.fetch = window.q4OriginalFetch`, or reload.
+
+To simulate failed recovery, block `*sections=*` in DevTools while the script is active. Expect one add and a warning that the display could not update. Check the cart before adding again. Disable blocking and restore fetch afterwards.
+
+Record counts, selected/returned variant, mode, and errors before updating submission verification. Real locale testing requires an alternate language configured in the store; locale routing has only been checked with mocks so far.
+
+### Reported results
+
+- Question 4 is recorded as complete based on static checks, six automated tests, and Atif's manual-testing confirmation.
+- Guided coverage: selected variants, quantities and header count, no reload, duplicate clicks, inventory rejection, blocked-request feedback, and Notification/Drawer modes.
+- Evidence source: user-run manual testing; no individual counts, request logs, or screenshots were supplied, and the assistant did not independently observe the browser.
+- Missing-section recovery and failure were covered by mocks; their browser simulation, Cart page mode, keyboard focus, and real alternate-locale behavior have no separately recorded manual outcome.
