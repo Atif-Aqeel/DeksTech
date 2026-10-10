@@ -265,3 +265,21 @@ Record the tested product URLs, actual rich-text rendering, missing-data behavio
 - Guided coverage: editor block insertion, both products' care content and formatting, referenced-content updates after refresh, missing reference, missing current care, and empty output when neither field is populated.
 - Evidence source: user-run testing. Product URLs, screenshots, and per-case results were not supplied; the assistant did not independently observe the browser.
 - Self-reference, mobile formatting, and product-swap behavior have no separately recorded test outcome.
+
+
+## Question 9: shared Designer metaobjects
+
+Status: complete based on Admin setup, Shopify validation, and successful user-reported guided testing on October 10, 2026. The steps below are retained for repeat testing.
+
+1. Keep the development theme running. In Admin > Online Store > Pages, create a visible page titled Our Designers, handle our-designers. Body text is optional.
+2. Select the designers theme template if available. If it is absent from the Admin dropdown, test the development template directly at http://127.0.0.1:9292/pages/our-designers?view=designers. An alternate template can be selected with the view parameter; publishing the theme is not required for this test.
+3. In the development Theme Editor, open the product template used by the assigned products. Under Product information, Add block > Designer, position it, and save. Verify each relevant template if products use different templates.
+4. Open two products referencing the same designer and a third referencing another designer. Check name, biography formatting, photo, and country against Admin. Both shared products must show the same designer; the third must show its own.
+5. Edit the shared designer biography, save, and refresh both products and the directory. All three locations must reflect the edit after normal storefront caching.
+6. Open the directory URL from step 2. Confirm every Active storefront-visible entry appears, including an entry without product assignments if you create one. Each entry must appear once across the directory pages.
+7. In the development Theme Editor, select Pages > designers and preview Our Designers. Temporarily set Our designers > Designers per page to 1. With two Active entries, check page 1 and page 2, next/previous links, and preservation of the designers template. Restore 12 and save.
+8. On a product without a Designer reference, confirm no empty Designer heading/card. Temporarily remove a populated reference to check this, then restore it.
+9. Temporarily remove optional photo, country, and biography values; confirm the remaining card stays readable without broken images. Restore values. If publication status is enabled, temporarily mark an entry Draft: it should disappear from the directory and its product reference should not display a card. Restore Active.
+10. Check mobile and desktop layout, photo proportions, keyboard access to pagination, and editor block repositioning. Confirm existing price, variant, and cart behavior still works.
+
+Atif reported that Q9 works well and was tested successfully on October 10, 2026 after receiving the guided checks. No product URLs, screenshots, or individual case results were supplied. This confirms overall user-reported success; optional missing-field and Draft scenarios have no separately recorded outcome. The assistant did not independently observe the storefront.

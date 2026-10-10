@@ -1432,3 +1432,231 @@ References: [Creating metafield definitions](https://help.shopify.com/en/manual/
 Question 8 is complete based on the configured definitions, implemented Liquid, static validation, and reported manual tests. The product block renders merchant-edited formatted care instructions for the current product and one explicitly referenced product, with missing-data guards and no hardcoded product handles.
 
 ---
+
+
+## 9. Metaobjects vs. Metafields
+
+### Question
+
+Create a reusable Designer entity containing Name, Bio, Photo, and Country, assignable to multiple products, and display every designer on an Our Designers page. Explain the data model, Admin configuration, and Liquid rendering.
+
+### Approach and rationale
+
+Use one Designer metaobject definition for shared records and a product metafield referencing one record. Editing a designer updates every referencing product and the directory after refresh. Separate product metafields would duplicate the same designer's content across products; hardcoded theme content would require code changes for merchant edits. A metaobject holds the reusable entity, while the metafield expresses its relationship to a product.
+
+### Admin configuration
+
+Create a merchant-owned metaobject definition named Designer, with type handle `designer` and these field keys:
+
+| Field | Key | Type | Configuration |
+| --- | --- | --- | --- |
+| Name | name | Single line text | Required; display-name field |
+| Bio | bio | Rich text | Formatted biography |
+| Photo | photo | File reference | One file, restricted to images |
+| Country | country | Single line text | Optional country text |
+
+Enable storefront access and, when using Active/Draft status, make entries Active. Individual designer web pages are unnecessary for this directory. Create entries under Content > Metaobjects. Define product metafield `custom.designer` as one Metaobject reference restricted to Designer. Select an entry on each product; multiple products can reference the same entry.
+
+Create a visible page titled Our Designers with handle `our-designers`, and use the `page.designers` template. For development testing, the alternate template can be requested with `/pages/our-designers?view=designers`. Add the Designer block to Product information in the development Theme Editor and save. Add the directory to navigation if desired.
+
+### Implementation
+
+The shared snippet resolves typed values, escapes plain text, renders the rich-text metafield through `metafield_tag`, and outputs a responsive image with an alt-text fallback. Both the product block and directory use this snippet.
+
+`snippets/assessment-designer-card.liquid`:
+
+```liquid
+{% doc %}
+  Renders one reusable Designer metaobject entry.
+  @param {metaobject} designer - Designer with name, bio, photo and country.
+  @param {string} [image_sizes] - Responsive image sizes attribute.
+{% enddoc %}
+{%- if designer != blank and designer.name.value != blank -%}
+  <article class="assessment-designer">
+    {%- assign photo = designer.photo.value -%}
+    {%- if photo != blank and photo.media_type == 'image' -%}
+      {%- assign image_alt = photo.alt | default: designer.name.value -%}
+      {{
+        photo
+        | image_url: width: 960
+        | image_tag:
+          widths: '240, 360, 540, 720, 960',
+          sizes: image_sizes,
+          loading: 'lazy',
+          alt: image_alt,
+          class: 'assessment-designer__photo'
+      }}
+    {%- endif -%}
+    <h3 class="h4 assessment-designer__name">{{ designer.name.value | escape }}</h3>
+    {%- if designer.country.value != blank -%}
+      <p class="assessment-designer__country">{{ designer.country.value | escape }}</p>
+    {%- endif -%}
+    {%- if designer.bio != blank and designer.bio.type == 'rich_text_field' -%}
+      <div class="rte">{{ designer.bio | metafield_tag }}</div>
+    {%- endif -%}
+  </article>
+{%- endif -%}
+
+{% stylesheet %}
+  .assessment-designer__photo {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .assessment-designer__name {
+    margin: 1.6rem 0 0.8rem;
+  }
+
+  .assessment-designer__country {
+    margin: 0 0 1.2rem;
+  }
+
+  .assessment-designer {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+{% endstylesheet %}
+```
+
+The product block in `sections/main-product.liquid` resolves the reference with `.value`:
+
+```liquid
+{%- when 'designer' -%}
+  {%- assign designer = product.metafields.custom.designer.value -%}
+  {%- if designer != blank and designer.name.value != blank -%}
+    <div class="assessment-product-designer quick-add-hidden" {{ block.shopify_attributes }}>
+      <h2 class="h4">{{ 'assessment.designer_heading' | t }}</h2>
+      {% render 'assessment-designer-card', designer: designer, image_sizes: '(min-width: 750px) 45vw, 90vw' %}
+    </div>
+  {%- endif -%}
+```
+
+Its block schema is `{ "type": "designer", "name": "t:assessment_designer.block_name", "limit": 1 }`.
+
+The directory uses the global `metaobjects.designer.values` collection, independent of product assignments. Server-side pagination makes all storefront-visible entries accessible across pages without a single oversized loop. The editor setting defaults to 12 entries per page.
+
+`sections/assessment-designers.liquid`:
+
+```liquid
+<div class="assessment-designers page-width">
+  <h2 class="h2">{{ 'assessment.designers_heading' | t }}</h2>
+  {%- if metaobjects.designer != blank -%}
+    {%- paginate metaobjects.designer.values by section.settings.designers_per_page -%}
+      {%- if paginate.items > 0 -%}
+        <ul class="assessment-designers__grid" role="list">
+          {%- for designer in metaobjects.designer.values -%}
+            <li>
+              {% render 'assessment-designer-card',
+                designer: designer,
+                image_sizes: '(min-width: 990px) 30vw, (min-width: 750px) 45vw, 90vw'
+              %}
+            </li>
+          {%- endfor -%}
+        </ul>
+        {%- if paginate.pages > 1 -%}
+          {% render 'pagination', paginate: paginate, anchor: '' %}
+        {%- endif -%}
+      {%- else -%}
+        <p>{{ 'assessment.designers_empty' | t }}</p>
+      {%- endif -%}
+    {%- endpaginate -%}
+  {%- else -%}
+    <p>{{ 'assessment.designers_empty' | t }}</p>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  .assessment-designers {
+    padding-block: 3.2rem;
+  }
+
+  .assessment-designers__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3.2rem;
+    padding: 0;
+    margin: 2.4rem 0 0;
+    list-style: none;
+  }
+
+  @media screen and (min-width: 750px) {
+    .assessment-designers__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media screen and (min-width: 990px) {
+    .assessment-designers__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:assessment_designer.listing_name",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "range",
+      "id": "designers_per_page",
+      "min": 1,
+      "max": 24,
+      "step": 1,
+      "default": 12,
+      "label": "t:assessment_designer.per_page"
+    }
+  ],
+  "presets": [
+    { "name": "t:assessment_designer.listing_name" }
+  ]
+}
+{% endschema %}
+```
+
+`templates/page.designers.json`:
+
+```json
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "settings": {
+        "padding_top": 28,
+        "padding_bottom": 28
+      }
+    },
+    "designers": {
+      "type": "assessment-designers",
+      "settings": {
+        "designers_per_page": 12
+      }
+    }
+  },
+  "order": ["main", "designers"]
+}
+```
+
+English storefront keys under `assessment` are `designer_heading` (Designer), `designers_heading` (Meet our designers), and `designers_empty` (No designers are available yet). Schema keys under `assessment_designer` are `block_name` (Designer), `listing_name` (Our designers), and `per_page` (Designers per page).
+
+### Edge cases and considerations
+
+- Products without a resolved reference or designer name omit the entire block.
+- Missing photos and countries omit those elements. Rich text is rendered only for a rich-text field; non-image files are not rendered as photos.
+- Draft entries are excluded from storefront access when the definition uses publication status. Every designer means every storefront-visible entry, including entries not assigned to any product.
+- An absent definition or empty directory displays a translated empty-state message.
+- The directory follows Shopify's returned entry order; custom sorting is outside the requirement.
+- Responsive columns use one, two, and three columns across mobile, tablet, and desktop. No additional JavaScript, app, or per-designer web page is required.
+
+### Verification
+
+The merchant confirmed completing Admin configuration steps 1-4: definition, entries, product-reference definition, and product assignments. Shopify Theme Check passed the shared snippet, directory section, alternate template, and both English locale files. The main product section retained two inherited Dawn warnings (unused `seo_media` and unknown `continue`). Atif Aqeel reported that the implementation works well and completed the guided development-preview testing on October 10, 2026. This is user-reported verification; individual case results and screenshots were not supplied, and the assistant did not independently observe the storefront. Repeat-test steps and evidence limits are recorded in TESTING.md.
+
+References: [Metaobject definitions and values](https://shopify.dev/docs/api/liquid/objects/metaobject_definition), [Alternate templates](https://shopify.dev/docs/storefronts/themes/architecture/templates/alternate-templates).
+
+### Result
+
+Question 9 is complete based on the configured Admin data, implemented theme code, static Shopify validation, and successful user-reported development-preview testing. Designer records are reusable across products and displayed through one shared renderer in the product block and paginated directory.
+
+---

@@ -68,3 +68,12 @@ Status: complete based on definition setup, static validation, and Atif's succes
 Atif created the rich-text care and single product-reference definitions and populated two products. Added a reusable care snippet and a one-per-section Care instructions block to main-product, with translated headings/editor label, rich-text rendering, .value reference resolution, missing-data/type guards, and self-reference suppression. The block is added through the development Theme Editor; the source does not alter template block order automatically. Manual coverage and evidence limits are recorded in TESTING.md.
 
 Theme Check passed the snippet and both English locales; main-product retained its two inherited warnings. Locale JSON parsing and git diff whitespace checks passed. No new JavaScript or external dependency was introduced.
+
+
+## Question 9
+
+Status: complete based on Admin setup, theme implementation, static Shopify validation, and successful user-reported guided testing on October 10, 2026.
+
+Added a shared Designer card snippet, optional product information block resolving custom.designer, paginated assessment-designers section, page.designers JSON template, and English storefront/editor translations. Expected merchant definition type is designer, with name, bio, photo, and country field keys. Storefront access and Active entries are required. No JavaScript or dependencies added.
+
+Theme Check passed the snippet, directory section, template, and both English locales. Main-product retained two inherited warnings. TESTING.md includes page creation, the development view=designers URL, block insertion, shared edits, missing data, draft behavior, responsive checks, and a one-entry-per-page pagination test. ASSESSMENT.md contains the final data-model explanation and actual Liquid/template code with the reported verification result and evidence limits.
