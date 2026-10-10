@@ -1,8 +1,6 @@
-# Shopify Theme Dev Assessment — Atif Aqeel
+# Shopify theme development assessment: Atif Aqeel
 
-
-
-## 1. Liquid Output, Money Filters & Sale Logic
+## 1. Liquid output, money filters, and sale logic
 
 ### Requirement
 
@@ -10,7 +8,7 @@ Display the monetary amount and percentage saved when a product is on sale. Show
 
 ### Approach and assumptions
 
-Use the selected variant, falling back to the first available variant, so the saving compares prices from the same variant. Display savings only when its compare-at price exceeds its current price. This is a catalog sale comparison, not a calculation of automatic discounts or discount codes. Dollar examples assume a USD storefront; money filters respect the customer's presentment currency and the theme's currency-code setting.
+I compare the selected variant's price with its own compare-at price, falling back to the first available variant when needed. Savings appear only when the compare-at price is higher. This covers catalog sale pricing; automatic discounts and discount codes need a separate calculation. The dollar examples assume USD, while the money filters use the customer's presentment currency and the theme's currency-code setting.
 
 Monetary savings = compare-at price − current price. Percentage saved = monetary savings ÷ compare-at price × 100, rounded to the nearest whole number. For example, a $100 compare-at price and $80 current price produce $20 savings and 20% saved.
 
@@ -62,7 +60,7 @@ In `sections/main-product.liquid`, the price block now contains:
 </div>
 ```
 
-Dawn's inherited `assets/product-info.js` replaces the contents of this price region after a variant change. Keeping the savings inside it reuses that behavior without adding another JavaScript handler.
+Dawn's existing `assets/product-info.js` replaces this price region when the variant changes. Placing savings inside that region keeps them current through the same handler.
 
 ### Edge cases and considerations
 
@@ -77,7 +75,7 @@ Dawn's inherited `assets/product-info.js` replaces the contents of this price re
 
 Shopify Theme Check passed the savings snippet and English locale file with no errors. The main product section passed with two warnings in inherited Dawn code.
 
-Manual development-preview testing was completed and reported successful by Atif Aqeel on October 10, 2026:
+Manual preview testing was reported successful on October 10, 2026, with these results:
 
 - $100 compare-at / $80 price: $20 savings and 20%.
 - $30 compare-at / $20 price: $10 savings and 33%.
@@ -96,7 +94,7 @@ The implementation displays currency-formatted monetary savings and a rounded pe
 
 ---
 
-## 2. Collection Filtering & the Pagination Trap
+## 2. Collection filtering and the pagination trap
 
 ### Requirement
 
@@ -110,9 +108,9 @@ Apply Shopify's native Availability filter before pagination. Availability is en
 /collections/assessment-q2-stock-pagination?filter.v.availability=1
 ```
 
-Use this filtered URL for the navigation entry intended to show only in-stock products. The assumption is that “in stock” means Shopify's native available-for-purchase status. For inventory-tracked test products, disable continuing to sell when out of stock. Products with untracked inventory or continue-selling enabled may still be available at zero physical stock.
+The in-stock navigation entry should use this filtered URL. Here, "in stock" means available to purchase under Shopify's rules. For the tracked test inventory, selling beyond stock is disabled. Untracked products and products with continue-selling enabled can still be purchasable at zero physical stock.
 
-Shopify filters the collection on the server before Liquid paginates `collection.products`. Reuse Dawn's existing product cards, filter controls, sorting, and pagination links. The final page can contain fewer than 12 products.
+Shopify applies the filter before Liquid paginates `collection.products`. Dawn's existing cards, filters, sorting, and pagination then work with that result set. Only the final page should have fewer than 12 products.
 
 ### Implementation
 
@@ -154,7 +152,7 @@ The inherited rendering remains:
 {%- endpaginate -%}
 ```
 
-The code above is an excerpt of the existing structure; the actual loop renders `card-product` with Dawn's image, layout, and quick-add settings. No availability condition is added inside the product loop. Dawn's `pagination` snippet uses Shopify-generated `paginate.previous.url`, `part.url`, and `paginate.next.url`; it does not rebuild links using only a page number. Dawn's facet handling carries selected filter values into sorting requests.
+This excerpt uses Dawn's existing `card-product` rendering with its image, layout, and quick-add settings. The loop does not skip unavailable products after pagination. The `pagination` snippet keeps Shopify's generated `paginate.previous.url`, `part.url`, and `paginate.next.url` links, and Dawn's facet handling carries the selected filters into sorting requests.
 
 ### The pagination trap
 
@@ -174,7 +172,7 @@ A Liquid `where: 'available', true` array is not a substitute for native full-co
 
 Shopify Theme Check passed the collection template and product-grid section with no warnings or errors. Static inspection confirmed that Dawn paginates `collection.products` before rendering cards and uses Shopify-generated pagination URLs.
 
-Manual testing was completed by Atif Aqeel on October 10, 2026, in the development preview. The assessment collection contains 30 imported test products: 25 available and 5 sold out. The guided tests were reported successful and covered:
+The preview collection has 30 imported products: 25 available and 5 sold out. Manual testing was reported successful on October 10, 2026, covering:
 
 - The in-stock view across three pages, with expected page sizes of 12, 12, and 1.
 - Availability retained in the supplied pagination URLs.
@@ -187,21 +185,21 @@ Reference: [Shopify storefront filtering](https://shopify.dev/docs/storefronts/t
 
 ### Result
 
-Question 2 is complete for the availability-filtered collection view. Shopify filters eligible products before pagination, allowing full pages of 12 products and a shorter final page without counting sold-out products in the in-stock result set. The standard unfiltered collection remains accessible.
+The filtered collection displays 12 available products per page, with a shorter last page. The reported test returned 12, 12, and 1 products across three pages. The ordinary unfiltered collection remains available.
 
 ---
 
-## 3. Section Schema with Settings & Repeatable Blocks
+## 3. Section schema with settings and repeatable blocks
 
 ### Requirement
 
-Create a section schema with a heading text field, background color picker, padding slider from 0–100px, and repeatable Feature blocks containing an image and caption. Show how padding is output and blocks are rendered in Liquid.
+Create a section schema with a heading text field, background color picker, padding slider from 0-100px, and repeatable Feature blocks containing an image and caption. Show how padding is output and blocks are rendered in Liquid.
 
 ### Approach and assumptions
 
-Use a dedicated OS 2.0 section, `sections/assessment-features.liquid`, with a preset so merchants can add it through the Theme Editor. Padding applies equally to the top and bottom; Dawn's `page-width` class provides horizontal gutters. Each Feature renders in a responsive grid with one column on mobile, two on tablet, and three on desktop.
+I use an OS 2.0 section, `sections/assessment-features.liquid`, with a preset for the Theme Editor's Add section menu. The padding setting controls both the top and bottom, and Dawn's `page-width` class supplies horizontal gutters. Feature blocks use one column on mobile, two on tablet, and three on desktop.
 
-The heading and captions are plain text and are escaped. Images use Shopify's responsive image filters and retain their aspect ratio. Merchants should supply meaningful image alt text and choose a background with sufficient contrast against the inherited theme text color. The component is intended for supporting content below the first viewport, so images are lazy-loaded.
+Heading and caption values are escaped as plain text. Shopify's responsive image filters preserve each image's proportions. Merchants should enter useful alt text and choose a background that keeps the inherited text readable. Images are lazy loaded because this section is intended for supporting content below the first viewport.
 
 ### Implementation
 
@@ -369,9 +367,9 @@ The following keys are added at the root of `locales/en.default.schema.json` for
 }
 ```
 
-The padding setting is output as `--feature-padding: {{ section.settings.padding }}px` on the section's wrapper. Static CSS consumes this with `padding-block: var(--feature-padding)`. Liquid values are output in the HTML rather than inside `{% stylesheet %}`, where Liquid is not evaluated.
+The wrapper sets `--feature-padding: {{ section.settings.padding }}px`, and the CSS reads it through `padding-block: var(--feature-padding)`. The Liquid belongs in the HTML because `{% stylesheet %}` does not evaluate Liquid.
 
-The `section.blocks` loop renders each Feature in merchant-defined order. `block.shopify_attributes` on each list item allows the Theme Editor to identify, select, and reorder blocks. Background and padding variables are set on each instance's wrapper, allowing independent settings when the section is added twice. No JavaScript is needed.
+The `section.blocks` loop follows the merchant's block order. Each item has `block.shopify_attributes` so the editor can identify and select it during editing. Background and padding values stay on each section's wrapper, which also makes two instances independent. This section needs no JavaScript.
 
 ### Edge cases and considerations
 
@@ -386,15 +384,15 @@ The `section.blocks` loop renders each Feature in merchant-defined order. `block
 
 Shopify Theme Check passed the section and English schema locale file with no warnings or errors.
 
-Atif Aqeel reported successful completion of the guided Theme Editor and development-preview tests on October 10, 2026. Testing covered editing the heading and background, setting padding to 0px, 40px, and 100px, adding images and captions, adding/removing/reordering Feature blocks, checking mobile and desktop layouts, and verifying that two section instances retain independent settings.
+Editor and preview testing was reported successful on October 10, 2026. The checks covered editing the heading and background, setting padding to 0px, 40px, and 100px, adding images and captions, adding/removing/reordering Feature blocks, checking mobile and desktop layouts, and verifying that two section instances retain independent settings.
 
 ### Result
 
-Question 3 is complete. The section provides all requested settings and repeatable Feature blocks, with explicit Liquid output for padding and block rendering. It is available through the Theme Editor's Add section menu as Assessment features, and the guided manual tests were reported successful.
+The Assessment features section has the requested heading, background, padding slider, and repeatable image/caption blocks. Its Liquid outputs the chosen padding and block order. Theme Check and the reported editor and preview tests passed.
 
 ---
 
-## 4. AJAX Cart & Section Rendering API
+## 4. AJAX cart and the Section Rendering API
 
 ### Requirement
 
@@ -402,11 +400,11 @@ Add the selected variant without refreshing the page, update the header cart cou
 
 ### Approach and assumptions
 
-Extend Dawn's existing `product-form` custom element rather than attach a second submit listener. Read the selected variant ID, quantity, line-item properties, and any selling plan from the existing form using `FormData`. Post to the locale-aware `window.routes.cart_add_url` generated by Liquid.
+I extend Dawn's `product-form` custom element and keep its existing submit listener. `FormData` reads the selected variant, quantity, properties, and selling plan from the form. The request goes to the locale-aware `window.routes.cart_add_url` supplied by Liquid.
 
 Request bundled section rendering in the add operation. Notification mode requests `cart-notification-product`, `cart-notification-button`, and `cart-icon-bubble`; drawer mode requests `cart-drawer` and `cart-icon-bubble`. When neither cart component exists, request only `cart-icon-bubble` and update the header without redirecting. The header target is `#cart-icon-bubble`; its rendered Liquid uses `cart.item_count`, which counts total units rather than distinct lines or the last-added quantity.
 
-The normal path makes one add request and renders the returned sections. If section HTML is missing or lacks its expected selector, make one read-only Section Rendering API request to recover the requested sections. Never repeat the add automatically.
+A successful add normally needs one request: add the item, then render the returned cart sections. If HTML is missing or lacks the expected selector, the handler makes one read-only Section Rendering API request. It never retries the add automatically.
 
 ### Implementation
 
@@ -603,17 +601,17 @@ JavaScript syntax checking passed. Six automated tests in `tests/q4-cart.test.cj
 
 These tests use mocked requests and DOM elements. Shopify Theme Check passed the JavaScript and English locale file without findings. The layout passed with one warning in inherited code (`scheme_classes`).
 
-Atif Aqeel reported successful completion of the guided development-preview tests on October 10, 2026. The guided checks covered selected-variant additions without reloading, header quantities increasing from 1 to 3 to 4, duplicate-click prevention, inventory errors, blocked-request feedback, and successful cart/header updates in Notification and Drawer modes.
+Manual preview testing was reported successful on October 10, 2026. The checks covered selected-variant additions without reloading, header quantities increasing from 1 to 3 to 4, duplicate-click prevention, inventory errors, blocked-request feedback, and successful cart/header updates in Notification and Drawer modes.
 
 Reference: [Shopify AJAX Cart API and bundled section rendering](https://shopify.dev/docs/api/ajax/reference/cart).
 
 ### Result
 
-Question 4 is complete based on static validation, automated tests, and the reported manual storefront checks. The handler adds the selected variant without page navigation and updates the header through server-rendered cart HTML. It retains Dawn's cart components while adding duplicate-submit protection, visible failure messages, and recovery that does not repeat the cart mutation.
+The selected variant is added without navigation, and server-rendered cart HTML updates the header count. Duplicate submission, visible errors, and read-only section recovery are handled within Dawn's existing cart flow. Static checks, six automated tests, and the reported Notification and Drawer tests passed.
 
 ---
 
-## 5. Theme Editor Lifecycle Events
+## 5. Theme Editor lifecycle events
 
 ### Requirement
 
@@ -621,17 +619,17 @@ Explain why a JavaScript carousel breaks when blocks are added, removed, or reor
 
 ### Why it happens
 
-The Theme Editor can replace section HTML without reloading the page. Initialization that runs only on page load does not automatically run for the replacement DOM. The new carousel can remain uninitialized while the old instance retains references to removed elements, event listeners, timers, or observers.
+The Theme Editor replaces section HTML without a page reload. Code that initializes a carousel only on page load misses the new DOM. Meanwhile, the old instance can keep references to removed slides, listeners, timers, and observers.
 
-Block changes also invalidate cached slide counts, positions, and measurements. Reinitializing indiscriminately can make the problem worse by creating duplicate instances and autoplay timers.
+Adding, removing, or moving blocks changes slide counts and measurements. Creating another carousel instance without cleaning up the old one can leave duplicate controls or autoplay timers.
 
 ### Solution approach
 
-Give each carousel a single owner for initialization and cleanup. Initialize existing carousels on page load. Before a section is removed or replaced, destroy its instance. When its replacement loads, initialize against the new DOM and current block order.
+I would keep initialization and cleanup in one place. Existing carousels initialize on page load. When an editor operation removes or replaces a section, its carousel is destroyed; the replacement initializes from the current slides and their order.
 
-Initialization must be safe to call repeatedly: check whether an instance already exists, and refresh it when appropriate instead of creating duplicates. Scope actions to the affected section using the event target and section ID so editing one carousel does not reset others.
+Repeated initialization should refresh an existing instance when appropriate, rather than create another. The event target and section ID keep the operation local, so changing one carousel leaves the others alone.
 
-Cleanup must remove registered listeners, stop autoplay timers, disconnect observers, cancel scheduled callbacks, and release old DOM references. The exact methods depend on the carousel implementation; there is no universal Shopify carousel initialization or destroy API.
+Destroying an instance means removing its listeners, stopping timers, disconnecting observers, cancelling scheduled callbacks, and releasing old DOM references. The methods depend on the carousel library; Shopify does not provide a universal carousel destroy API.
 
 ### Lifecycle handlers
 
@@ -654,17 +652,17 @@ Register the document-level editor handlers once, not inside every carousel init
 
 Each slide wrapper must include `{{ block.shopify_attributes }}` so Shopify can identify it and target block-selection events. Locate the selected slide in its own carousel, reveal it, and pause rotation while it is selected.
 
-Deselecting a block must not blindly start autoplay. Respect the section configuration, a customer's manual pause, reduced-motion behavior, and remaining pause conditions such as another editor selection. Keeping separate pause reasons prevents one event from incorrectly overriding another.
+Autoplay resumes after deselection only if it is enabled and no other pause reason remains. That includes a customer's manual pause, reduced-motion behavior, or another editor selection. Tracking the reasons separately prevents one event from undoing another pause.
 
 ### Application to Dawn
 
-Dawn already provides a slideshow custom element and block-selection handlers. Reuse that architecture rather than add another carousel library or parallel instance manager.
+Dawn already has a slideshow custom element and block-selection handlers. I would build on those rather than introduce another library or instance manager.
 
 A custom element can own initialization in `connectedCallback()` and cleanup in `disconnectedCallback()`. In that design, section-event handlers should call guarded refresh or selection methods instead of independently constructing the same instance. This describes a lifecycle design; it does not claim that every existing Dawn slideshow method already implements it.
 
 ### Verification and scope
 
-The lifecycle event names and responsibilities were checked against Shopify's official Theme Editor documentation. This answer is a written explanation, as requested by the question. No theme implementation changes or Question 5 browser tests were performed.
+Shopify's Theme Editor documentation confirms the event names used here. Q5 asks for an explanation, so this is a proposed lifecycle design; no theme changes or browser tests were performed for it.
 
 For an implementation, I would verify repeated slide additions, removals, and reordering; selection of a nonvisible slide; deletion and re-addition of a section; and independent operation of two carousel instances. Controls should react once per interaction, selected slides should remain visible, and removed instances should leave no running timers or observers. These are proposed checks, not reported test results.
 
@@ -672,11 +670,11 @@ Reference: [Shopify Theme Editor lifecycle](https://shopify.dev/docs/storefronts
 
 ### Result
 
-The proposed solution addresses the carousel failure by initializing against the current section DOM, cleaning up replaced instances, preventing duplicate initialization, and maintaining selected-slide visibility. The written answer covers the cause, fix, and lifecycle handlers required by Question 5.
+The carousel would initialize from the current section DOM, clean up when that DOM is replaced, and keep a selected slide visible. The lifecycle handlers above cover those responsibilities without creating duplicate instances.
 
 ---
 
-## 6. Per-Instance CSS Without Style Bleed
+## 6. Independent styling for section instances
 
 ### Requirement
 
@@ -684,9 +682,9 @@ Allow two instances of the same section to use different background colors selec
 
 ### Approach and assumptions
 
-Set CSS custom properties on each instance's wrapper and consume them in shared static CSS. The declaration belongs to that DOM element, so every instance can use a different value without generating competing background rules for the same shared class.
+I set CSS custom properties on each section wrapper and read them from shared CSS. Each element supplies its own background value, so two sections can use the same class without sharing a selected color.
 
-This reuses the Feature section implemented in Question 3. Background and padding are section settings, not global theme settings. An inline custom property is appropriate for these simple property values; a selector based on `section.id` would also work when more complex instance-specific rules are needed.
+The Feature section from Q3 already does this. Background and padding belong to the section settings. Inline custom properties suit these values; a selector using `section.id` would also work for more complex rules.
 
 ### Implementation
 
@@ -735,15 +733,15 @@ For example, one instance can set `--feature-background: #f3f8ff` while another 
 
 The existing Feature section passed Shopify Theme Check without warnings or errors. Static review confirmed that background and padding values are declared on the instance wrapper and consumed by shared static CSS.
 
-During Question 3 testing, Atif Aqeel reported successful verification of two section instances with independent settings on October 10, 2026. Question 6 reuses that implementation and reported test; no new code or separate browser test was needed.
+The two-instance check from Q3 was reported successful on October 10, 2026. This answer uses that same implementation and test; it required no additional code or separate browser session.
 
 ### Result
 
-Question 6 is complete. Each section instance uses its own background and padding values, while sharing the same CSS rules, preventing settings from bleeding into other instances of the section.
+Each Feature section uses its own background and padding while sharing the stylesheet. The two-instance test reported for Q3 confirmed that editing one section leaves the other section's settings intact.
 
 ---
 
-## 7. Integrated Build – AJAX Variant / Size Selector
+## 7. AJAX variant and size selector
 
 ### Requirement
 
@@ -751,9 +749,9 @@ Select the correct size variant, disable out-of-stock sizes, update the displaye
 
 ### Approach and assumptions
 
-Use Dawn's existing `variant-selects` and `product-info` components. The assessment product has one option named Size, a small variant set, differing prices, and at least one sold-out size. Strict native disabling applies only to this single-Size scope. Other product configurations retain Dawn's existing option navigation so unavailable intermediate combinations do not block access to valid combinations.
+I use Dawn's `variant-selects` and `product-info` components. The assessment product has one option named Size, differing prices, a small variant set, and at least one sold-out size. Native disabling is limited to that Size-only setup. Other products keep Dawn's option navigation, so an unavailable intermediate combination does not prevent reaching a valid one.
 
-The picker publishes option-value IDs; Dawn requests the updated product section and Shopify resolves the variant. The returned selected-variant data, controls, price, savings, form variant ID, and purchase state are synchronized. This avoids an extra selection handler or a full embedded variant array.
+The picker publishes the selected option-value IDs, and Dawn requests the updated product section. Shopify resolves the variant and returns the matching controls, price, savings, and selected-variant data. Dawn then updates the form ID and purchase state. No second selection handler or full variant array is needed.
 
 ### Liquid and HTML
 
@@ -1287,17 +1285,17 @@ variant-selects input[type='radio']:disabled + label {
 
 JavaScript syntax and whitespace checks passed. Four automated tests in `tests/q7-variants.test.cjs` passed: preserving URL parameters/hash/history state, removing unresolved variants and respecting embedded URL behavior, keeping purchasing disabled after a failed response, and rejecting a late superseded response.
 
-Shopify Theme Check passed the option snippet, JavaScript, CSS, and English locale without findings. The layout retains one warning in inherited code (`scheme_classes`). Tests use mocked requests and DOM elements. Atif Aqeel confirmed completion of all remaining testing on October 10, 2026, including Q7 development-preview acceptance. This is user-reported verification; no individual case results or screenshots were supplied.
+Shopify Theme Check passed the option snippet, JavaScript, CSS, and English locale without findings. The layout retains one warning in inherited code (`scheme_classes`). Tests use mocked requests and DOM elements. Q7 preview testing was confirmed complete on October 10, 2026. This is a reported overall result; individual case records and screenshots were not supplied.
 
-The reusable fixture `test-data/q7-product.csv` contains one Size-only product with S, M, L, and XL variants priced at 20, 25, 30, and 35 respectively. M has a compare-at price of 30; L has zero inventory and selling beyond stock is disabled. The CSV was checked locally for one product, four unique sizes, and the intended stock distribution. The fixture supports repeatable storefront verification. Successful overall testing was subsequently confirmed by Atif; no separate import log was supplied.
+The reusable fixture `test-data/q7-product.csv` contains one Size-only product with S, M, L, and XL variants priced at 20, 25, 30, and 35 respectively. M has a compare-at price of 30; L has zero inventory and selling beyond stock is disabled. The CSV was checked locally for one product, four unique sizes, and the intended stock distribution. Overall storefront testing was later confirmed successful. The fixture remains available for repeat checks, although no separate import log was supplied.
 
 ### Result
 
-The integrated Dawn size selector has native disabled sold-out controls for the stated scope, server-rendered variant pricing, synchronized form IDs, and URL updates that retain unrelated parameters. Question 7 is complete based on the implementation, static validation, four automated checks, and user-confirmed development-preview testing, without adding duplicate selection or cart handlers.
+For the documented Size-only product, sold-out controls are disabled and size changes update the price, form variant ID, and URL without a reload. Unrelated URL parameters remain intact. Static validation, four automated tests, and user-confirmed preview testing passed.
 
 ---
 
-## 8. Metafields: Definition, Rendering & References
+## 8. Metafield definitions, rendering, and references
 
 ### Requirement
 
@@ -1305,7 +1303,7 @@ Define merchant-editable Care Instructions for products, render them on the prod
 
 ### Approach and assumptions
 
-Use a merchant-owned rich-text product metafield for instructions and a single product-reference metafield for the relationship. Rich text supports paragraphs and lists; a reference avoids hardcoded product handles. Both definitions are created in Shopify Admin, independently of theme deployment.
+I use a merchant-owned rich-text product metafield for the instructions and one product-reference metafield for the related product. Rich text preserves paragraphs and lists. The reference lets the merchant choose the relationship without hardcoded handles. Admin definitions are independent of theme deployment.
 
 ### Definitions and values
 
@@ -1316,13 +1314,13 @@ In Settings → Metafields and metaobjects → Products, create:
 | Care Instructions | `custom.care_instructions` | Rich text (`rich_text_field`) | Merchant-edited care content |
 | Care Related Product | `custom.care_related_product` | One product (`product_reference`) | Related product whose care is displayed |
 
-Pin the definitions for convenient editing. They make fields available on all products but do not populate every product automatically. Enter values in each product's Metafields area.
+Pinning these definitions makes editing easier. They expose the fields on every product, but merchants still need to enter each product's values in its Metafields area.
 
 For example, Product A can contain a list stating Wash cold, Do not bleach, and Dry flat, with its related-product field referencing Product B. Product B can contain Wipe with a damp cloth, Avoid soaking, and Air dry. These are illustrative values; the merchant enters content appropriate to the products. Both products should be available to the Online Store for storefront testing.
 
 ### Implementation
 
-Add a Care instructions block to Dawn's main product section. The merchant can position this block using the Theme Editor; its schema permits one instance per product section.
+The Care instructions block belongs in Dawn's Product information section. Merchants can move it in the Theme Editor, and the schema permits one block per product section.
 
 The complete `snippets/assessment-care-instructions.liquid` is:
 
@@ -1406,7 +1404,7 @@ The English schema locale adds:
 }
 ```
 
-Pass the rich-text metafield itself to `metafield_tag` to generate formatted HTML. Resolve the product-reference metafield with `.value` to obtain the related product object, then read that product's care metafield. The related heading identifies the referenced product and escapes its title.
+`metafield_tag` receives the rich-text metafield and produces formatted HTML. The related reference is resolved with `.value`; the snippet then reads that product's care field. Its title is escaped before it appears in the related heading.
 
 ### Edge cases and considerations
 
@@ -1421,20 +1419,19 @@ Pass the rich-text metafield itself to `metafield_tag` to generate formatted HTM
 
 ### Verification
 
-Atif confirmed creating both definitions and populating two products. Shopify Theme Check passed the care snippet and both English locale files without findings. The main product section passed with two warnings in inherited Dawn code (unused `seo_media` and unknown `continue`). Locale JSON parsing and whitespace checks passed.
+Both definitions were created and two products populated, as confirmed during setup. Shopify Theme Check passed the care snippet and both English locale files without findings. The main product section passed with two warnings in inherited Dawn code (unused `seo_media` and unknown `continue`). Locale JSON parsing and whitespace checks passed.
 
-Atif Aqeel reported successful completion of the guided development-preview tests on October 10, 2026. The checks covered adding the Care instructions block, rendering the current and referenced product's formatted instructions, reflecting changes to the referenced product after refresh, removing the reference, clearing the current product's instructions, and omitting empty output when neither field is populated.
+Manual preview testing was reported successful on October 10, 2026. The checks covered adding the Care instructions block, rendering the current and referenced product's formatted instructions, reflecting changes to the referenced product after refresh, removing the reference, clearing the current product's instructions, and omitting empty output when neither field is populated.
 
 References: [Creating metafield definitions](https://help.shopify.com/en/manual/custom-data/metafields/metafield-definitions/creating-custom-metafield-definitions), [metafield_tag](https://shopify.dev/docs/api/liquid/filters/metafield_tag), [Metafield values](https://shopify.dev/docs/api/liquid/objects/metafield).
 
 ### Result
 
-Question 8 is complete based on the configured definitions, implemented Liquid, static validation, and reported manual tests. The product block renders merchant-edited formatted care instructions for the current product and one explicitly referenced product, with missing-data guards and no hardcoded product handles.
+The block displays formatted care instructions for the current product and one referenced product. Missing content is omitted, and product relationships stay editable in Admin. The definitions, Liquid validation, and reported preview tests are complete.
 
 ---
 
-
-## 9. Metaobjects vs. Metafields
+## 9. Metaobjects and metafields
 
 ### Question
 
@@ -1442,7 +1439,7 @@ Create a reusable Designer entity containing Name, Bio, Photo, and Country, assi
 
 ### Approach and rationale
 
-Use one Designer metaobject definition for shared records and a product metafield referencing one record. Editing a designer updates every referencing product and the directory after refresh. Separate product metafields would duplicate the same designer's content across products; hardcoded theme content would require code changes for merchant edits. A metaobject holds the reusable entity, while the metafield expresses its relationship to a product.
+I store each designer once in a Designer metaobject and use a product metafield to reference that record. An edit appears on every linked product and the directory after refresh. Separate product fields would duplicate the biography and other details; hardcoded theme content would require code edits. The metaobject holds the entity, and the metafield holds the product relationship.
 
 ### Admin configuration
 
@@ -1461,7 +1458,7 @@ Create a visible page titled Our Designers with handle `our-designers`, and use 
 
 ### Implementation
 
-The shared snippet resolves typed values, escapes plain text, renders the rich-text metafield through `metafield_tag`, and outputs a responsive image with an alt-text fallback. Both the product block and directory use this snippet.
+Both the product block and directory use the same card snippet. It resolves the field values, escapes plain text, formats the biography through `metafield_tag`, and renders a responsive photo with fallback alt text.
 
 `snippets/assessment-designer-card.liquid`:
 
@@ -1534,7 +1531,7 @@ The product block in `sections/main-product.liquid` resolves the reference with 
 
 Its block schema is `{ "type": "designer", "name": "t:assessment_designer.block_name", "limit": 1 }`.
 
-The directory uses the global `metaobjects.designer.values` collection, independent of product assignments. Server-side pagination makes all storefront-visible entries accessible across pages without a single oversized loop. The editor setting defaults to 12 entries per page.
+The directory reads `metaobjects.designer.values` independently of product assignments. Pagination keeps all storefront-visible entries accessible across pages; the default is 12 entries per page.
 
 `sections/assessment-designers.liquid`:
 
@@ -1651,18 +1648,17 @@ English storefront keys under `assessment` are `designer_heading` (Designer), `d
 
 ### Verification
 
-The merchant confirmed completing Admin configuration steps 1-4: definition, entries, product-reference definition, and product assignments. Shopify Theme Check passed the shared snippet, directory section, alternate template, and both English locale files. The main product section retained two inherited Dawn warnings (unused `seo_media` and unknown `continue`). Atif Aqeel reported that the implementation works well and completed the guided development-preview testing on October 10, 2026. This is user-reported verification; individual case results and screenshots were not supplied, and the assistant did not independently observe the storefront. Repeat-test steps and evidence limits are recorded in TESTING.md.
+Admin setup is complete: the definition, entries, reference field, and product assignments are configured. Shopify Theme Check passed the card snippet, directory section, alternate template, and both English locale files. The main product section retains two inherited warnings (unused `seo_media` and unknown `continue`). Preview testing was reported successful on October 10, 2026. No screenshots or individual case records were supplied, and there was no independent browser observation. Repeat-test instructions and evidence limits are kept in TESTING.md.
 
 References: [Metaobject definitions and values](https://shopify.dev/docs/api/liquid/objects/metaobject_definition), [Alternate templates](https://shopify.dev/docs/storefronts/themes/architecture/templates/alternate-templates).
 
 ### Result
 
-Question 9 is complete based on the configured Admin data, implemented theme code, static Shopify validation, and successful user-reported development-preview testing. Designer records are reusable across products and displayed through one shared renderer in the product block and paginated directory.
+Designer records are shared across products and listed on their own paginated page. One snippet keeps the product and directory rendering consistent. Admin setup, static validation, and reported preview testing are complete.
 
 ---
 
-
-## 10. Performance Debugging & Technical Judgment
+## 10. Performance debugging and technical judgment
 
 ### Question
 
@@ -1670,13 +1666,13 @@ A merchant reports a slow storefront. Investigation reveals six apps injecting s
 
 ### Starting point: establish the symptoms and baseline
 
-I would first ask which pages and interactions feel slow, when the problem started, and whether it affects mobile customers more than desktop customers. I would review recent theme and app changes, identify the merchant's essential features, and retain a known working theme version for rollback.
+I would start by asking which pages or interactions are slow, when it began, and whether mobile customers are affected most. Recent app and theme changes may explain a regression. Before experimenting, I would identify the features the merchant needs and keep a known working theme version for rollback.
 
-The three findings are investigation leads. Their presence alone does not establish their relative cost. I would separate slow server response, delayed visible content, JavaScript execution, and slow interactions before choosing fixes.
+Six app scripts, nested loops, and large product payloads are all worth investigating. Measurements should establish their relative cost: server response time, delayed content, JavaScript work, or interaction latency.
 
-I would measure representative homepage, collection, and product pages, including a product with many variants. I would record document response timing, transferred HTML and JavaScript size, request activity, main-thread work, and the largest visible content element. I would also exercise variant selection, quick add, and cart updates, because a page can load acceptably and still respond poorly.
+The baseline would include the homepage, a collection, and a product with many variants. I would record document response timing, HTML and JavaScript transfer sizes, request activity, main-thread work, and the largest visible content element. Variant selection, quick add, and cart updates also need a trace, since loading speed alone says little about how the page responds.
 
-For repeatable comparisons, I would use the same URLs, browser, viewport, CPU/network settings, consent state, and cache conditions, repeat runs, and compare medians and traces. Cold and warm loads would be recorded separately. Development previews are useful for comparing changes, but their results would not be presented as production customer measurements.
+Comparisons need the same URLs, browser, viewport, CPU and network settings, consent state, and cache conditions. I would repeat runs and compare medians alongside the traces, keeping cold and warm loads separate. Development previews help compare revisions, but their measurements are not production customer data.
 
 ### Tools and what each would establish
 
@@ -1695,50 +1691,50 @@ Theme Inspector supplies a Liquid rendering flame graph, while Lighthouse provid
 
 ### Investigating the six app integrations
 
-I would inventory each app's scripts, features, applicable pages, loading mechanism, dependencies, and business owner. The audit would distinguish app embeds, theme blocks, legacy snippet inclusions, and other injection mechanisms. I would check for duplicate installations and code left behind by previously removed apps.
+For each app, I would record its scripts, feature, relevant pages, loading method, dependencies, and business owner. App embeds, theme blocks, and legacy snippet injections may need different changes. Duplicate inclusions and code left behind by removed apps are worth checking first.
 
-For each integration, I would inspect transfer size, execution time, network dependencies, and whether it delays visible content or interactions. Request blocking can help isolate a script's contribution during diagnosis, but it is not a production fix and may break dependencies.
+Network and Performance traces would show transfer size, execution cost, dependencies, and delays to content or interactions. Blocking a request can isolate a script during diagnosis, although it may break dependencies and is not a production fix.
 
-Where supported, I would disable one app embed at a time in an unpublished theme, rerun the same measurements, and test its feature. App settings and legacy integrations can affect the whole store, so I would confirm their scope before changing them. I would retain required consent, analytics, and purchasing behavior.
+Where the integration supports it, I would turn off one app embed in an unpublished theme, repeat the measurements, and check the affected feature. Legacy integrations and app settings can affect the entire store, so I would establish their scope first. Consent, analytics, and purchasing behavior must keep working.
 
-The resulting action might be removing an unused integration, eliminating duplicate injection, restricting a widget to relevant pages, or using the vendor's supported deferred initialization. Adding async or defer everywhere would not be sufficient: downloaded scripts can still consume main-thread time, and changing execution order can break dependencies. I would escalate expensive required integrations to the vendor with traces and a reproducible example.
+Depending on the evidence, I might remove an unused app, eliminate a duplicate inclusion, load a widget only on relevant pages, or use the vendor's supported deferred initialization. Async and defer can change loading order, but scripts still use main-thread time and may depend on one another. An expensive required app would go back to its vendor with a trace and reproducible example.
 
 ### Simplifying nested Liquid work
 
-I would use Theme Inspector to locate the repeated collection traversal and establish whether it materially contributes to rendering time. I would inspect why the loop exists: relationship lookup, product grouping, recommendations, or repeated presentation logic.
+Theme Inspector would show the cost of the nested collection traversal. I would then inspect what it is doing: finding relationships, grouping products, building recommendations, or repeating presentation work.
 
-If every product scans every collection merely to find a relationship, I would replace that search with an explicit collection or product reference, a section setting, or another suitable merchant-maintained relationship. I would calculate invariant values once outside the product loop, remove duplicate snippet work, stop searches when the required match is found, and bound output to the products actually needed.
+If each product scans all collections to find a relationship, I would consider an explicit collection or product reference, a section setting, or another merchant-maintained relationship. Values that stay constant can move outside the loop. Duplicate work can be removed, a search can stop at its required match, and output can be limited to the products actually needed.
 
-The replacement must preserve the existing relationship and output rules. A render snippet is useful for structure, but moving the same nested work into a snippet does not eliminate its cost. I would profile again to confirm that the changed path is faster, including empty relationships and products belonging to multiple collections.
+The replacement must preserve the relationship and output rules. Moving a costly loop into a render snippet improves organization, but leaves the same work to do. I would profile the revised code and check empty relationships and products in multiple collections.
 
 ### Reducing homepage product and variant payloads
 
-I would agree with the merchant on how many products the homepage needs to show initially. A smaller curated selection, for example 8?12 products with a link to the full collection, is a candidate rather than a fixed requirement. If browsing more products on the homepage is essential, I would provide an accessible additional-content mechanism and measure its cost.
+The homepage product count is a merchandising decision as well as a performance decision. I would discuss a smaller initial selection, perhaps 8 to 12 products linking to the full collection. If customers need more products on the homepage, an accessible way to load more is another option whose cost should be measured.
 
-I would inspect every consumer of the full variant data before removing it. Cards that only need a title, image, displayed price, availability, and product link should render those fields without serializing every variant. Cards with quick add or variant selection must retain the data necessary to choose and purchase the correct variant; they must not silently add the first variant as a shortcut.
+Before removing variant data, I would find the code that uses it. A simple card needs its title, image, price, availability, and product link, without every variant serialized alongside it. A card with quick add or a picker still needs enough information to select and purchase the right variant. Adding the first variant silently would change the feature.
 
-For richer interactions, I would load the relevant product/section content when the customer opens the selector or quick-add interface, reuse Dawn's existing interaction flow where applicable, and handle loading, failure, and repeated activation. This trades a smaller initial payload for interaction-time work, so both stages need testing.
+A richer selector could request the relevant product or section content when it opens, using Dawn's existing quick-add flow where appropriate. Loading, errors, and repeated activation need handling. This reduces initial work but adds work during the interaction, so I would test both stages.
 
 I would also check product image sizing and DOM volume. Below-the-fold images can be lazy loaded; the likely LCP image should load promptly. Lazy loading images alone does not reduce Liquid processing, inline variant JSON, or the number of initially rendered product cards. Shopify's guidance supports profiling Liquid and reducing unnecessary theme resources. [Shopify theme performance best practices](https://shopify.dev/docs/storefronts/themes/best-practices/performance).
 
 ### Priorities and functionality tradeoffs
 
-I would prioritize measured customer impact, implementation effort, business importance, and regression risk. Clear unused or duplicate integrations are good early candidates. Expensive repeated Liquid work and unnecessary product data are next candidates, with their order determined by profiling. Required app replacements or substantial interaction redesign would need stronger evidence and a staged plan.
+I would rank changes by measured customer impact, effort, business importance, and regression risk. Unused or duplicate integrations are sensible early candidates. The traces would determine whether repeated Liquid work or unnecessary product data comes next. Replacing a required app or redesigning an interaction needs stronger evidence and a staged plan.
 
-For example, if Liquid dominates document response time, I would address the nested traversal first. If app execution dominates long tasks and interaction delay, I would prioritize those integrations. If the document is large because of 50 product cards and variant payloads, I would reduce that initial work. These are conditional decisions, not claimed findings from this assessment theme.
+If Liquid accounts for most of the document response delay, I would fix the nested traversal first. If app execution causes the long tasks and slow interactions, those scripts take priority. If the 50 cards and their variant data dominate document size, I would reduce the initial output. These are conditional priorities for the scenario, not measured findings from this theme.
 
-Before removing a feature, I would explain its measured cost and alternatives to the merchant. Performance gains must preserve accurate prices, availability, selected variant IDs, accessibility, consent behavior, and essential analytics. I would avoid changing multiple unrelated components in one experiment, so the effect of each change remains attributable and reversible.
+Before removing a feature, I would show the merchant its measured cost and the available alternatives. Prices, availability, selected variant IDs, accessibility, consent, and essential analytics must remain correct. Testing one change at a time makes its effect easier to identify and reverse.
 
 ### Verification and rollout
 
-I would maintain a before/after record containing the affected URL, conditions, change, repeated measurement results, and functional outcome. A successful change should improve its targeted metric beyond normal run-to-run variation without worsening another important path.
+Each change would have a before-and-after record: URL, test conditions, measurements, and functional result. The gain should exceed ordinary run-to-run variation without making another important path slower.
 
-Regression checks would cover navigation, search/filtering, card links, available and sold-out variants, quick add, cart updates, discounts where relevant, consent states, essential app widgets, and analytics event duplication or loss. I would test mobile and keyboard use and verify behavior in the Theme Editor when section content changes dynamically.
+Regression testing would include navigation, search and filters, card links, available and sold-out variants, quick add, cart updates, relevant discounts, consent states, and required app widgets. Analytics events should neither disappear nor fire twice. Mobile, keyboard use, and dynamically replaced Theme Editor sections also need checking.
 
-After review, I would deploy small changes with a rollback version available, check production behavior, and monitor customer performance reports and business outcomes over a suitable period. Field data takes time to reflect changes; immediate lab gains alone would not establish a conversion improvement. I would document what improved, what remains expensive, and the next justified action without promising a specific speed gain before measurement.
+I would release small reviewed changes with a rollback version available, check production behavior, and watch customer performance reports alongside business outcomes. Field data takes time to respond, and a lab improvement does not prove a conversion gain. The handover would state what improved, what still costs time, and the next justified change. I would make no numerical speed promise before measuring.
 
 ### Result
 
-Question 10 is complete as a written response to the supplied scenario. The proposed process establishes evidence, isolates app, Liquid, and payload costs, prioritizes measured improvements, and protects storefront functionality through repeatable checks and reversible rollout. No performance audit, optimization, benchmark result, or production deployment is claimed for this assessment theme.
+The proposed investigation measures the bottlenecks, tests targeted changes, and checks that required features still work before rollout. Q10 is a written scenario response. No performance audit, optimization, benchmark result, or production deployment was performed for this assessment.
 
 ---
