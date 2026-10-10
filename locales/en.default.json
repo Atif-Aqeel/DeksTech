@@ -5,7 +5,10 @@
     "cart_added_refresh_error": "Added to your cart, but the cart display could not be updated. Open your cart to review it.",
     "variant_selection_error": "This size could not be loaded. Select a size again or refresh the page before adding to cart.",
     "care_heading": "Care instructions",
-    "related_care_heading": "Care instructions for {{ product }}"
+    "related_care_heading": "Care instructions for {{ product }}",
+    "designer_heading": "Designer",
+    "designers_heading": "Meet our designers",
+    "designers_empty": "No designers are available yet."
   },
   "general": {
     "password_page": {

@@ -1,4 +1,9 @@
 {
+  "assessment_designer": {
+    "block_name": "Designer",
+    "listing_name": "Our designers",
+    "per_page": "Designers per page"
+  },
   "assessment_care": {
     "name": "Care instructions"
   },

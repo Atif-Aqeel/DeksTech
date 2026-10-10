@@ -200,6 +200,14 @@
                 {%- endif -%}
               {%- when 'care_instructions' -%}
                 {% render 'assessment-care-instructions', product: product, block: block %}
+              {%- when 'designer' -%}
+                {%- assign designer = product.metafields.custom.designer.value -%}
+                {%- if designer != blank and designer.name.value != blank -%}
+                  <div class="assessment-product-designer quick-add-hidden" {{ block.shopify_attributes }}>
+                    <h2 class="h4">{{ 'assessment.designer_heading' | t }}</h2>
+                    {% render 'assessment-designer-card', designer: designer, image_sizes: '(min-width: 750px) 45vw, 90vw' %}
+                  </div>
+                {%- endif -%}
               {%- when 'sku' -%}
                 <p
                   class="product__sku{% if block.settings.text_style == 'uppercase' %} caption-with-letter-spacing{% elsif block.settings.text_style == 'subtitle' %} subtitle{% endif %}{% if product.selected_or_first_available_variant.sku.size == 0 %} visibility-hidden{% endif %}"
@@ -781,6 +789,11 @@
     {
       "type": "care_instructions",
       "name": "t:assessment_care.name",
+      "limit": 1
+    },
+    {
+      "type": "designer",
+      "name": "t:assessment_designer.block_name",
       "limit": 1
     },
     {

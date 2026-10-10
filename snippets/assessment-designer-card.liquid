@@ -1,0 +1,51 @@
+{% doc %}
+  Renders one reusable Designer metaobject entry.
+  @param {metaobject} designer - Designer with name, bio, photo and country.
+  @param {string} [image_sizes] - Responsive image sizes attribute.
+{% enddoc %}
+{%- if designer != blank and designer.name.value != blank -%}
+  <article class="assessment-designer">
+    {%- assign photo = designer.photo.value -%}
+    {%- if photo != blank and photo.media_type == 'image' -%}
+      {%- assign image_alt = photo.alt | default: designer.name.value -%}
+      {{
+        photo
+        | image_url: width: 960
+        | image_tag:
+          widths: '240, 360, 540, 720, 960',
+          sizes: image_sizes,
+          loading: 'lazy',
+          alt: image_alt,
+          class: 'assessment-designer__photo'
+      }}
+    {%- endif -%}
+    <h3 class="h4 assessment-designer__name">{{ designer.name.value | escape }}</h3>
+    {%- if designer.country.value != blank -%}
+      <p class="assessment-designer__country">{{ designer.country.value | escape }}</p>
+    {%- endif -%}
+    {%- if designer.bio != blank and designer.bio.type == 'rich_text_field' -%}
+      <div class="rte">{{ designer.bio | metafield_tag }}</div>
+    {%- endif -%}
+  </article>
+{%- endif -%}
+
+{% stylesheet %}
+  .assessment-designer__photo {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .assessment-designer__name {
+    margin: 1.6rem 0 0.8rem;
+  }
+
+  .assessment-designer__country {
+    margin: 0 0 1.2rem;
+  }
+
+  .assessment-designer {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+{% endstylesheet %}

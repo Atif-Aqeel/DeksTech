@@ -1,0 +1,74 @@
+<div class="assessment-designers page-width">
+  <h2 class="h2">{{ 'assessment.designers_heading' | t }}</h2>
+  {%- if metaobjects.designer != blank -%}
+    {%- paginate metaobjects.designer.values by section.settings.designers_per_page -%}
+      {%- if paginate.items > 0 -%}
+        <ul class="assessment-designers__grid" role="list">
+          {%- for designer in metaobjects.designer.values -%}
+            <li>
+              {% render 'assessment-designer-card',
+                designer: designer,
+                image_sizes: '(min-width: 990px) 30vw, (min-width: 750px) 45vw, 90vw'
+              %}
+            </li>
+          {%- endfor -%}
+        </ul>
+        {%- if paginate.pages > 1 -%}
+          {% render 'pagination', paginate: paginate, anchor: '' %}
+        {%- endif -%}
+      {%- else -%}
+        <p>{{ 'assessment.designers_empty' | t }}</p>
+      {%- endif -%}
+    {%- endpaginate -%}
+  {%- else -%}
+    <p>{{ 'assessment.designers_empty' | t }}</p>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  .assessment-designers {
+    padding-block: 3.2rem;
+  }
+
+  .assessment-designers__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3.2rem;
+    padding: 0;
+    margin: 2.4rem 0 0;
+    list-style: none;
+  }
+
+  @media screen and (min-width: 750px) {
+    .assessment-designers__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media screen and (min-width: 990px) {
+    .assessment-designers__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:assessment_designer.listing_name",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "range",
+      "id": "designers_per_page",
+      "min": 1,
+      "max": 24,
+      "step": 1,
+      "default": 12,
+      "label": "t:assessment_designer.per_page"
+    }
+  ],
+  "presets": [
+    { "name": "t:assessment_designer.listing_name" }
+  ]
+}
+{% endschema %}
