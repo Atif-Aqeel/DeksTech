@@ -1,0 +1,5 @@
+"Title","URL handle","Description","Vendor","Type","Tags","Published on online store","Status","Option1 name","Option1 value","SKU","Price","Compare-at price","Inventory tracker","Inventory quantity","Continue selling when out of stock","Fulfillment service","Requires shipping","Charge tax"
+"Assessment Q7 Size Selector","assessment-q7-size-selector","<p>Size selector assessment product. Choose an available size to test price updates, variant URLs, and cart selection. Size L is intentionally sold out.</p>","DeksTech Assessment","Assessment Test","assessment-q7","true","active","Size","S","Q7-S","20.00","","shopify","10","deny","manual","true","true"
+"","assessment-q7-size-selector","","","","","","","Size","M","Q7-M","25.00","30.00","shopify","10","deny","manual","true","true"
+"","assessment-q7-size-selector","","","","","","","Size","L","Q7-L","30.00","","shopify","0","deny","manual","true","true"
+"","assessment-q7-size-selector","","","","","","","Size","XL","Q7-XL","35.00","","shopify","10","deny","manual","true","true"
