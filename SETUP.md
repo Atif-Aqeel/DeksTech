@@ -46,3 +46,7 @@ Status: complete based on static validation, six automated tests, and Atif's suc
 Final review confirmed that the full JavaScript in ASSESSMENT.md matches assets/product-form.js. JavaScript syntax and git diff whitespace checks passed. No required implementation work remains for Question 4; detailed test coverage and limits remain in TESTING.md.
 
 Extended Dawn's existing product-form handler with bundled section validation, one read-only recovery request, duplicate-submit protection, visible errors, and no cart-page redirect. Added translated messages through cartStrings in the layout. JavaScript syntax and six mocked automated tests passed. Theme Check passed the JS and locale file; the layout retains one inherited warning for scheme_classes. Manual results and evidence limits are recorded in TESTING.md. No duplicate product/cart submit handler was added.
+
+## Question 5
+
+Status: complete as a written answer under the revised question-specific workflow. The submission explains dynamic DOM replacement, instance initialization/cleanup, section and block event responsibilities, autoplay pause conditions, and Dawn integration. Event names were checked against official Shopify documentation. No theme code was modified and no Q5 browser tests were performed; verification scenarios are explicitly proposed only.

@@ -612,3 +612,66 @@ Reference: [Shopify AJAX Cart API and bundled section rendering](https://shopify
 Question 4 is complete based on static validation, automated tests, and the reported manual storefront checks. The handler adds the selected variant without page navigation and updates the header through server-rendered cart HTML. It retains Dawn's cart components while adding duplicate-submit protection, visible failure messages, and recovery that does not repeat the cart mutation.
 
 ---
+
+## 5. Theme Editor Lifecycle Events
+
+### Requirement
+
+Explain why a JavaScript carousel breaks when blocks are added, removed, or reordered in the Theme Editor, how to fix it, and which lifecycle handlers to use.
+
+### Why it happens
+
+The Theme Editor can replace section HTML without reloading the page. Initialization that runs only on page load does not automatically run for the replacement DOM. The new carousel can remain uninitialized while the old instance retains references to removed elements, event listeners, timers, or observers.
+
+Block changes also invalidate cached slide counts, positions, and measurements. Reinitializing indiscriminately can make the problem worse by creating duplicate instances and autoplay timers.
+
+### Solution approach
+
+Give each carousel a single owner for initialization and cleanup. Initialize existing carousels on page load. Before a section is removed or replaced, destroy its instance. When its replacement loads, initialize against the new DOM and current block order.
+
+Initialization must be safe to call repeatedly: check whether an instance already exists, and refresh it when appropriate instead of creating duplicates. Scope actions to the affected section using the event target and section ID so editing one carousel does not reset others.
+
+Cleanup must remove registered listeners, stop autoplay timers, disconnect observers, cancel scheduled callbacks, and release old DOM references. The exact methods depend on the carousel implementation; there is no universal Shopify carousel initialization or destroy API.
+
+### Lifecycle handlers
+
+| Event | Handler responsibility |
+|---|---|
+| Initial page load | Initialize each existing carousel once. |
+| `shopify:section:load` | Initialize the carousel within the newly added or re-rendered section. |
+| `shopify:section:unload` | Destroy the affected instance and clean up its resources before removal or replacement. |
+| `shopify:section:reorder` | Refresh measurements if moving the section changes its layout. |
+| `shopify:block:select` | Reveal the selected slide and apply an editor pause so it stays visible. |
+| `shopify:block:deselect` | Release the block-selection pause; resume only when autoplay is enabled and no other pause condition applies. |
+| `shopify:section:select` | Keep the section visible; apply a section-selection pause if needed. |
+| `shopify:section:deselect` | Release the section-selection pause without overriding other pause conditions. |
+
+There is no documented `shopify:block:reorder` event. Block additions, removals, and reordering are handled through the section re-render lifecycle; `shopify:section:reorder` refers to moving an entire section.
+
+Register the document-level editor handlers once, not inside every carousel initialization. Normal storefront initialization must run independently of editor-only event handling; `Shopify.designMode` can identify the editor context.
+
+### Block selection and autoplay
+
+Each slide wrapper must include `{{ block.shopify_attributes }}` so Shopify can identify it and target block-selection events. Locate the selected slide in its own carousel, reveal it, and pause rotation while it is selected.
+
+Deselecting a block must not blindly start autoplay. Respect the section configuration, a customer's manual pause, reduced-motion behavior, and remaining pause conditions such as another editor selection. Keeping separate pause reasons prevents one event from incorrectly overriding another.
+
+### Application to Dawn
+
+Dawn already provides a slideshow custom element and block-selection handlers. Reuse that architecture rather than add another carousel library or parallel instance manager.
+
+A custom element can own initialization in `connectedCallback()` and cleanup in `disconnectedCallback()`. In that design, section-event handlers should call guarded refresh or selection methods instead of independently constructing the same instance. This describes a lifecycle design; it does not claim that every existing Dawn slideshow method already implements it.
+
+### Verification and scope
+
+The lifecycle event names and responsibilities were checked against Shopify's official Theme Editor documentation. This answer is a written explanation, as requested by the question. No theme implementation changes or Question 5 browser tests were performed.
+
+For an implementation, I would verify repeated slide additions, removals, and reordering; selection of a nonvisible slide; deletion and re-addition of a section; and independent operation of two carousel instances. Controls should react once per interaction, selected slides should remain visible, and removed instances should leave no running timers or observers. These are proposed checks, not reported test results.
+
+Reference: [Shopify Theme Editor lifecycle](https://shopify.dev/docs/storefronts/themes/best-practices/editor/integrate-sections-and-blocks).
+
+### Result
+
+The proposed solution addresses the carousel failure by initializing against the current section DOM, cleaning up replaced instances, preventing duplicate initialization, and maintaining selected-slide visibility. The written answer covers the cause, fix, and lifecycle handlers required by Question 5.
+
+---
