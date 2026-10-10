@@ -1287,13 +1287,13 @@ variant-selects input[type='radio']:disabled + label {
 
 JavaScript syntax and whitespace checks passed. Four automated tests in `tests/q7-variants.test.cjs` passed: preserving URL parameters/hash/history state, removing unresolved variants and respecting embedded URL behavior, keeping purchasing disabled after a failed response, and rejecting a late superseded response.
 
-Shopify Theme Check passed the option snippet, JavaScript, CSS, and English locale without findings. The layout retains one warning in inherited code (`scheme_classes`). Tests use mocked requests and DOM elements. Live size selection, native disabled controls, price updates, and cart integration have not yet been manually verified.
+Shopify Theme Check passed the option snippet, JavaScript, CSS, and English locale without findings. The layout retains one warning in inherited code (`scheme_classes`). Tests use mocked requests and DOM elements. Atif Aqeel confirmed completion of all remaining testing on October 10, 2026, including Q7 development-preview acceptance. This is user-reported verification; no individual case results or screenshots were supplied.
 
-The reusable fixture `test-data/q7-product.csv` contains one Size-only product with S, M, L, and XL variants priced at 20, 25, 30, and 35 respectively. M has a compare-at price of 30; L has zero inventory and selling beyond stock is disabled. The CSV was checked locally for one product, four unique sizes, and the intended stock distribution. This prepares repeatable storefront verification without claiming a successful import or browser result.
+The reusable fixture `test-data/q7-product.csv` contains one Size-only product with S, M, L, and XL variants priced at 20, 25, 30, and 35 respectively. M has a compare-at price of 30; L has zero inventory and selling beyond stock is disabled. The CSV was checked locally for one product, four unique sizes, and the intended stock distribution. The fixture supports repeatable storefront verification. Successful overall testing was subsequently confirmed by Atif; no separate import log was supplied.
 
 ### Result
 
-The integrated Dawn size selector has native disabled sold-out controls for the stated scope, server-rendered variant pricing, synchronized form IDs, and URL updates that retain unrelated parameters. It is ready for development-preview testing without adding duplicate selection or cart handlers.
+The integrated Dawn size selector has native disabled sold-out controls for the stated scope, server-rendered variant pricing, synchronized form IDs, and URL updates that retain unrelated parameters. Question 7 is complete based on the implementation, static validation, four automated checks, and user-confirmed development-preview testing, without adding duplicate selection or cart handlers.
 
 ---
 

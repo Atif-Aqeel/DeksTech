@@ -8,7 +8,7 @@
 - Shopify CLI: 4.8.0. Node is available.
 - Shopify Dev MCP is available and was initialized for Liquid in this session.
 - No applicable AGENTS.md was found in the workspace or checked ancestor directories.
-- Read-only theme listing succeeded for `dev-store-startup.myshopify.com`, confirming current CLI authentication and access. It returned live, unpublished, and development themes. This is not yet confirmed as the intended testing store.
+- Read-only theme listing succeeded for `dev-store-startup.myshopify.com`, confirming current CLI authentication and access. It returned live, unpublished, and development themes. Atif subsequently used this store for the assessment development preview.
 - No theme deployment, email, or assessment submission has been performed.
 
 ## Validation and setup gaps
@@ -17,7 +17,7 @@ The first read-only store theme-list attempt failed because the sandbox denied a
 
 Shopify Dev MCP Theme Check validated the three changed theme files with no errors. The new savings snippet and English locale file passed all checks. The main product section retained two findings in inherited code: unused `seo_media` and an unknown `continue` object. These findings are outside the added savings implementation.
 
-Question 1 storefront acceptance cases are documented in `TESTING.md`. Static validation cannot substitute for those checks. `ASSESSMENT.md` contains submission content only; unanswered question placeholders were removed and will be replaced with completed answers as work progresses.
+Question 1 storefront acceptance cases are documented in `TESTING.md`. Static validation cannot substitute for those checks. `ASSESSMENT.md` contains submission content only; all ten question answers are now present. All ten questions are complete, with manual outcomes recorded as user-reported where applicable.
 
 Question 1 arithmetic review identified that Liquid division follows the divisor type. The snippet now converts the compare-at price to a float before dividing so rounding can correctly round up as well as down.
 
@@ -57,9 +57,9 @@ Status: complete using the existing Question 3 Feature section. Verified the ins
 
 ## Question 7
 
-Implemented targeted extensions to Dawn's existing picker: native disabled attributes for unavailable values on a single option named Size, disabled-label cursor, parameter-preserving variant URLs, HTTP/response validation, user-visible selection errors, superseded-request guards, and abort on disconnect. Added four mocked automated tests, all passed. Theme Check passed with one inherited layout warning. Manual development-preview checks are pending; TESTING.md contains the Size-only product fixture and scenarios. No duplicate variant listener or full variant array was introduced.
+Implemented targeted extensions to Dawn's existing picker: native disabled attributes for unavailable values on a single option named Size, disabled-label cursor, parameter-preserving variant URLs, HTTP/response validation, user-visible selection errors, superseded-request guards, and abort on disconnect. Added four mocked automated tests, all passed. Theme Check passed with one inherited layout warning. Atif confirmed completion of manual development-preview testing on October 10, 2026; TESTING.md contains the Size-only product fixture and scenarios. No duplicate variant listener or full variant array was introduced.
 
-Created and locally checked `test-data/q7-product.csv` for direct product import: one product, four Size variants, three stocked and L sold out. Updated the guided storefront test with the local preview URL, expected prices/savings, cart selection, parameter preservation, direct links, rapid switching, dropdown/keyboard controls, and request failure recovery. Q7 remains awaiting user-reported manual results; no successful import or storefront test is inferred from providing the file and instructions.
+Created and locally checked `test-data/q7-product.csv` for direct product import: one product, four Size variants, three stocked and L sold out. Updated the guided storefront test with the local preview URL, expected prices/savings, cart selection, parameter preservation, direct links, rapid switching, dropdown/keyboard controls, and request failure recovery. Q7 is complete following Atif's confirmation of all remaining testing. Evidence is the overall user report; no separate import log or per-case results were supplied.
 
 ## Question 8
 

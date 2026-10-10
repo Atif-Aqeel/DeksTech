@@ -182,11 +182,11 @@ For repeat testing, add two Assessment features sections with different backgrou
 
 ## Question 7: size selector
 
-Manual testing is pending. Four mocked automated checks passed with `node --test tests/q7-variants.test.cjs`.
+Status: complete. Atif confirmed all remaining testing, including Q7, on October 10, 2026. Four mocked automated checks passed; direct execution with `node tests/q7-variants.test.cjs` was used in the final review because sandbox restrictions blocked the child-process test runner. The instructions below are retained for repeat testing.
 
 Create an Active Online Store product titled **Assessment Q7 Size Selector**, handle `assessment-q7-size-selector`, with one option named **Size**. Disable continue selling and track inventory. Use:
 
-Import fixture: `test-data/q7-product.csv`, containing one product with four Size variants. Import through Products → Import. For multi-location stores, set or verify inventory at the appropriate fulfillment location separately after product import. CSV structure and variant stock counts were checked locally; successful Shopify import has not yet been confirmed.
+Import fixture: `test-data/q7-product.csv`, containing one product with four Size variants. Import through Products → Import. For multi-location stores, set or verify inventory at the appropriate fulfillment location separately after product import. CSV structure and variant stock counts were checked locally; Atif subsequently confirmed overall testing; no separate import log was supplied.
 
 | Size | Price | Compare-at | Quantity |
 |---|---:|---:|---:|
@@ -238,7 +238,7 @@ Record actual results, product URL, variant IDs, and currency. Swatch rendering 
 
 ### Verification status
 
-Implementation, syntax validation, Theme Check, four mocked automated tests, and local CSV checks are complete. No manual Q7 test outcome has been reported. Import, storefront prices, native disabled controls, cart integration, and recovery should be confirmed before marking Q7 fully complete.
+Implementation, syntax validation, Theme Check, four mocked automated tests, local CSV checks, and user-confirmed manual acceptance are complete. Atif confirmed all remaining testing on October 10, 2026. The confirmation is an overall result; product URLs, screenshots, and individual case outcomes were not supplied, and the assistant did not independently observe the storefront.
 
 ## Question 8: product care metafields
 
@@ -288,3 +288,8 @@ Atif reported that Q9 works well and was tested successfully on October 10, 2026
 ## Question 10: performance debugging and technical judgment
 
 Q10 is complete as a written scenario answer. Official documentation was checked for Shopify performance reports, Theme Inspector, theme performance guidance, and Chrome Lighthouse. No storefront performance audit or benchmark was run, and no optimization was implemented. The baseline, controlled comparisons, functional regression checks, and rollout monitoring described in ASSESSMENT.md are proposed verification steps rather than completed tests.
+
+
+## Final requirement review
+
+On October 10, 2026, the original DOCX was compared against all ten answers and current theme source. Shopify validation of 15 reviewed files produced no errors and three inherited warnings. Direct execution of the existing Q4 and Q7 test files passed all ten checks. JavaScript syntax and relevant JSON parsing passed. REVIEW.md records question-by-question coverage and scope limits. Atif subsequently confirmed all remaining testing, including Q7, and all ten questions are marked complete. This review did not independently inspect the live storefront or Admin configuration.
