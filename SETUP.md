@@ -77,3 +77,8 @@ Status: complete based on Admin setup, theme implementation, static Shopify vali
 Added a shared Designer card snippet, optional product information block resolving custom.designer, paginated assessment-designers section, page.designers JSON template, and English storefront/editor translations. Expected merchant definition type is designer, with name, bio, photo, and country field keys. Storefront access and Active entries are required. No JavaScript or dependencies added.
 
 Theme Check passed the snippet, directory section, template, and both English locales. Main-product retained two inherited warnings. TESTING.md includes page creation, the development view=designers URL, block insertion, shared edits, missing data, draft behavior, responsive checks, and a one-entry-per-page pagination test. ASSESSMENT.md contains the final data-model explanation and actual Liquid/template code with the reported verification result and evidence limits.
+
+
+## Question 10
+
+Status: complete as a written answer. ASSESSMENT.md covers baseline measurement, field versus lab evidence, tool responsibilities, app integration isolation, nested Liquid traversal, homepage product/variant payloads, conditional priorities, functional tradeoffs, regression checks, and reversible rollout. Official tool documentation was checked. No theme code changed, no benchmark was performed, and no production improvement is claimed.

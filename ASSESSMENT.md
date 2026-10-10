@@ -1660,3 +1660,85 @@ References: [Metaobject definitions and values](https://shopify.dev/docs/api/liq
 Question 9 is complete based on the configured Admin data, implemented theme code, static Shopify validation, and successful user-reported development-preview testing. Designer records are reusable across products and displayed through one shared renderer in the product block and paginated directory.
 
 ---
+
+
+## 10. Performance Debugging & Technical Judgment
+
+### Question
+
+A merchant reports a slow storefront. Investigation reveals six apps injecting scripts, Liquid loops nesting collections inside product loops, and a homepage rendering 50 products with full variant data for each. Explain where to begin, which tools to use, what to prioritize, and how to balance performance with functionality.
+
+### Starting point: establish the symptoms and baseline
+
+I would first ask which pages and interactions feel slow, when the problem started, and whether it affects mobile customers more than desktop customers. I would review recent theme and app changes, identify the merchant's essential features, and retain a known working theme version for rollback.
+
+The three findings are investigation leads. Their presence alone does not establish their relative cost. I would separate slow server response, delayed visible content, JavaScript execution, and slow interactions before choosing fixes.
+
+I would measure representative homepage, collection, and product pages, including a product with many variants. I would record document response timing, transferred HTML and JavaScript size, request activity, main-thread work, and the largest visible content element. I would also exercise variant selection, quick add, and cart updates, because a page can load acceptably and still respond poorly.
+
+For repeatable comparisons, I would use the same URLs, browser, viewport, CPU/network settings, consent state, and cache conditions, repeat runs, and compare medians and traces. Cold and warm loads would be recorded separately. Development previews are useful for comparing changes, but their results would not be presented as production customer measurements.
+
+### Tools and what each would establish
+
+| Tool | Purpose in this investigation |
+| --- | --- |
+| Shopify web performance reports | Establish real-customer loading, responsiveness, and layout-stability trends; compare devices and page groups where data is available. |
+| Chrome DevTools Network | Inspect the document response, request waterfall, transfer sizes, script initiators, and unnecessary or duplicated requests. |
+| Chrome DevTools Performance | Record loading and actual interactions; attribute main-thread work, layout activity, and delays to specific scripts and tasks. |
+| Lighthouse / PageSpeed Insights | Obtain repeatable lab diagnostics and review available field data; use individual findings rather than treating one score as the diagnosis. |
+| Shopify Theme Inspector for Chrome | Profile server-side Liquid rendering and identify expensive loops and repeated snippet work. |
+| Shopify Theme Check and source review | Find relevant theme issues and inspect the templates, app integrations, and serialized data behind measured problems. |
+
+Shopify's performance reports cover LCP, INP, and CLS. They provide field evidence that complements controlled development tests; a low-traffic assessment store may not have enough data. [Shopify web performance reports](https://help.shopify.com/en/manual/online-store/web-performance/web-performance-reports).
+
+Theme Inspector supplies a Liquid rendering flame graph, while Lighthouse provides lab diagnostics. These address different parts of the request and should be used together. [Shopify Theme Inspector](https://shopify.dev/docs/storefronts/themes/tools/theme-inspector), [Chrome Lighthouse documentation](https://developer.chrome.com/docs/devtools/lighthouse/).
+
+### Investigating the six app integrations
+
+I would inventory each app's scripts, features, applicable pages, loading mechanism, dependencies, and business owner. The audit would distinguish app embeds, theme blocks, legacy snippet inclusions, and other injection mechanisms. I would check for duplicate installations and code left behind by previously removed apps.
+
+For each integration, I would inspect transfer size, execution time, network dependencies, and whether it delays visible content or interactions. Request blocking can help isolate a script's contribution during diagnosis, but it is not a production fix and may break dependencies.
+
+Where supported, I would disable one app embed at a time in an unpublished theme, rerun the same measurements, and test its feature. App settings and legacy integrations can affect the whole store, so I would confirm their scope before changing them. I would retain required consent, analytics, and purchasing behavior.
+
+The resulting action might be removing an unused integration, eliminating duplicate injection, restricting a widget to relevant pages, or using the vendor's supported deferred initialization. Adding async or defer everywhere would not be sufficient: downloaded scripts can still consume main-thread time, and changing execution order can break dependencies. I would escalate expensive required integrations to the vendor with traces and a reproducible example.
+
+### Simplifying nested Liquid work
+
+I would use Theme Inspector to locate the repeated collection traversal and establish whether it materially contributes to rendering time. I would inspect why the loop exists: relationship lookup, product grouping, recommendations, or repeated presentation logic.
+
+If every product scans every collection merely to find a relationship, I would replace that search with an explicit collection or product reference, a section setting, or another suitable merchant-maintained relationship. I would calculate invariant values once outside the product loop, remove duplicate snippet work, stop searches when the required match is found, and bound output to the products actually needed.
+
+The replacement must preserve the existing relationship and output rules. A render snippet is useful for structure, but moving the same nested work into a snippet does not eliminate its cost. I would profile again to confirm that the changed path is faster, including empty relationships and products belonging to multiple collections.
+
+### Reducing homepage product and variant payloads
+
+I would agree with the merchant on how many products the homepage needs to show initially. A smaller curated selection, for example 8?12 products with a link to the full collection, is a candidate rather than a fixed requirement. If browsing more products on the homepage is essential, I would provide an accessible additional-content mechanism and measure its cost.
+
+I would inspect every consumer of the full variant data before removing it. Cards that only need a title, image, displayed price, availability, and product link should render those fields without serializing every variant. Cards with quick add or variant selection must retain the data necessary to choose and purchase the correct variant; they must not silently add the first variant as a shortcut.
+
+For richer interactions, I would load the relevant product/section content when the customer opens the selector or quick-add interface, reuse Dawn's existing interaction flow where applicable, and handle loading, failure, and repeated activation. This trades a smaller initial payload for interaction-time work, so both stages need testing.
+
+I would also check product image sizing and DOM volume. Below-the-fold images can be lazy loaded; the likely LCP image should load promptly. Lazy loading images alone does not reduce Liquid processing, inline variant JSON, or the number of initially rendered product cards. Shopify's guidance supports profiling Liquid and reducing unnecessary theme resources. [Shopify theme performance best practices](https://shopify.dev/docs/storefronts/themes/best-practices/performance).
+
+### Priorities and functionality tradeoffs
+
+I would prioritize measured customer impact, implementation effort, business importance, and regression risk. Clear unused or duplicate integrations are good early candidates. Expensive repeated Liquid work and unnecessary product data are next candidates, with their order determined by profiling. Required app replacements or substantial interaction redesign would need stronger evidence and a staged plan.
+
+For example, if Liquid dominates document response time, I would address the nested traversal first. If app execution dominates long tasks and interaction delay, I would prioritize those integrations. If the document is large because of 50 product cards and variant payloads, I would reduce that initial work. These are conditional decisions, not claimed findings from this assessment theme.
+
+Before removing a feature, I would explain its measured cost and alternatives to the merchant. Performance gains must preserve accurate prices, availability, selected variant IDs, accessibility, consent behavior, and essential analytics. I would avoid changing multiple unrelated components in one experiment, so the effect of each change remains attributable and reversible.
+
+### Verification and rollout
+
+I would maintain a before/after record containing the affected URL, conditions, change, repeated measurement results, and functional outcome. A successful change should improve its targeted metric beyond normal run-to-run variation without worsening another important path.
+
+Regression checks would cover navigation, search/filtering, card links, available and sold-out variants, quick add, cart updates, discounts where relevant, consent states, essential app widgets, and analytics event duplication or loss. I would test mobile and keyboard use and verify behavior in the Theme Editor when section content changes dynamically.
+
+After review, I would deploy small changes with a rollback version available, check production behavior, and monitor customer performance reports and business outcomes over a suitable period. Field data takes time to reflect changes; immediate lab gains alone would not establish a conversion improvement. I would document what improved, what remains expensive, and the next justified action without promising a specific speed gain before measurement.
+
+### Result
+
+Question 10 is complete as a written response to the supplied scenario. The proposed process establishes evidence, isolates app, Liquid, and payload costs, prioritizes measured improvements, and protects storefront functionality through repeatable checks and reversible rollout. No performance audit, optimization, benchmark result, or production deployment is claimed for this assessment theme.
+
+---

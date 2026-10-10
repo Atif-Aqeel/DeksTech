@@ -283,3 +283,8 @@ Status: complete based on Admin setup, Shopify validation, and successful user-r
 10. Check mobile and desktop layout, photo proportions, keyboard access to pagination, and editor block repositioning. Confirm existing price, variant, and cart behavior still works.
 
 Atif reported that Q9 works well and was tested successfully on October 10, 2026 after receiving the guided checks. No product URLs, screenshots, or individual case results were supplied. This confirms overall user-reported success; optional missing-field and Draft scenarios have no separately recorded outcome. The assistant did not independently observe the storefront.
+
+
+## Question 10: performance debugging and technical judgment
+
+Q10 is complete as a written scenario answer. Official documentation was checked for Shopify performance reports, Theme Inspector, theme performance guidance, and Chrome Lighthouse. No storefront performance audit or benchmark was run, and no optimization was implemented. The baseline, controlled comparisons, functional regression checks, and rollout monitoring described in ASSESSMENT.md are proposed verification steps rather than completed tests.
