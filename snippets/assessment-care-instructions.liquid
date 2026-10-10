@@ -1,0 +1,45 @@
+{% doc %}
+  Renders product care instructions and care from one referenced product.
+  @param {product} product - Current product.
+  @param {object} block - Product section block.
+{% enddoc %}
+{%- liquid
+  assign care = product.metafields.custom.care_instructions
+  assign related_product = product.metafields.custom.care_related_product.value
+  assign show_care = false
+  assign show_related_care = false
+  if care != blank and care.type == 'rich_text_field'
+    assign show_care = true
+  endif
+  if related_product != blank and related_product.id != product.id
+    assign related_care = related_product.metafields.custom.care_instructions
+    if related_care != blank and related_care.type == 'rich_text_field'
+      assign show_related_care = true
+    endif
+  endif
+-%}
+{%- if show_care or show_related_care -%}
+  <div class="assessment-care quick-add-hidden" {{ block.shopify_attributes }}>
+    {%- if show_care -%}
+      <div class="assessment-care__group">
+        <h2 class="h4">{{ 'assessment.care_heading' | t }}</h2>
+        <div class="rte">{{ care | metafield_tag }}</div>
+      </div>
+    {%- endif -%}
+    {%- if show_related_care -%}
+      <div class="assessment-care__group">
+        <h2 class="h4">
+          {%- assign related_title = related_product.title | escape -%}
+          {{- 'assessment.related_care_heading' | t: product: related_title -}}
+        </h2>
+        <div class="rte">{{ related_care | metafield_tag }}</div>
+      </div>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .assessment-care__group + .assessment-care__group {
+    margin-top: 2.4rem;
+  }
+{% endstylesheet %}

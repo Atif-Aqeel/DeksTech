@@ -198,6 +198,8 @@
                     {{ product.description }}
                   </div>
                 {%- endif -%}
+              {%- when 'care_instructions' -%}
+                {% render 'assessment-care-instructions', product: product, block: block %}
               {%- when 'sku' -%}
                 <p
                   class="product__sku{% if block.settings.text_style == 'uppercase' %} caption-with-letter-spacing{% elsif block.settings.text_style == 'subtitle' %} subtitle{% endif %}{% if product.selected_or_first_available_variant.sku.size == 0 %} visibility-hidden{% endif %}"
@@ -774,6 +776,11 @@
     {
       "type": "price",
       "name": "t:sections.main-product.blocks.price.name",
+      "limit": 1
+    },
+    {
+      "type": "care_instructions",
+      "name": "t:assessment_care.name",
       "limit": 1
     },
     {

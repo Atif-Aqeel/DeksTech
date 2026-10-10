@@ -1,4 +1,7 @@
 {
+  "assessment_care": {
+    "name": "Care instructions"
+  },
   "assessment_features": {
     "name": "Assessment features",
     "heading": "Heading",
