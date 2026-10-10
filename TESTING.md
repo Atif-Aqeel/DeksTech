@@ -179,3 +179,63 @@ Record counts, selected/returned variant, mode, and errors before updating submi
 Reuses the two-instance isolation test reported complete during Question 3 on October 10, 2026. No separate Q6 browser session or additional code changes were needed. The source puts each instance's background and padding values on its wrapper; the submission documents that implementation.
 
 For repeat testing, add two Assessment features sections with different background/padding values. Change each instance in turn, save, and refresh. Each wrapper should retain its own settings. The example colors in the guide are suggested repeat-test data, not separately recorded actual values from the user-run test.
+
+## Question 7: size selector
+
+Manual testing is pending. Four mocked automated checks passed with `node --test tests/q7-variants.test.cjs`.
+
+Create an Active Online Store product titled **Assessment Q7 Size Selector**, handle `assessment-q7-size-selector`, with one option named **Size**. Disable continue selling and track inventory. Use:
+
+Import fixture: `test-data/q7-product.csv`, containing one product with four Size variants. Import through Products → Import. For multi-location stores, set or verify inventory at the appropriate fulfillment location separately after product import. CSV structure and variant stock counts were checked locally; successful Shopify import has not yet been confirmed.
+
+| Size | Price | Compare-at | Quantity |
+|---|---:|---:|---:|
+| S | 20.00 | Blank | 10 |
+| M | 25.00 | 30.00 | 10 |
+| L | 30.00 | Blank | 0 |
+| XL | 35.00 | Blank | 10 |
+
+Open this product in the development preview. Set the variant picker to Buttons initially and use a currency matching the expected prices. Empty the cart before cart checks.
+
+Local preview URL:
+
+```text
+http://127.0.0.1:9292/products/assessment-q7-size-selector
+```
+
+### Guided storefront test
+
+1. Select S, M, and XL and compare their prices with the table. M should show a compare-at price of 30 and savings of 5 / 17%. No selection should reload the document.
+2. Try clicking L and navigating with the keyboard. Its control must be natively disabled; available sizes remain usable.
+3. Empty the cart, select M, and add quantity 1. Verify the cart contains size M at 25.
+4. Open the product with `?utm_source=q7-test#details`, change size, and confirm both the parameter and fragment remain alongside the new variant ID.
+5. Copy a selected M variant URL and reopen it. Then use L's variant ID from Shopify Admin in a direct link; L's price should render with purchasing disabled, and selecting S should restore purchasing.
+6. Switch S → M → XL rapidly. After requests settle, XL's selection, price, hidden form ID, and URL must agree. Repeat using Dropdown mode and verify L is disabled there too.
+7. Block `*option_values=*` in DevTools Network and choose another available size. Confirm an error and disabled Add to cart. Remove blocking and choose another size or refresh to recover.
+
+The detailed expected outcomes below also include additional edge cases.
+
+| Check | Expected |
+|---|---|
+| Select S, M, XL | Corresponding prices 20, 25, 35; correct size selected |
+| Select M | Q1 savings shows 5 and 17%, using the storefront money format |
+| Try L | Radio has a native disabled attribute; mouse/keyboard cannot select it |
+| Change available size | URL variant changes, no document reload |
+| Add selected M | Cart contains M, not the previously selected size |
+| Switch rapidly S/M/XL with Slow 3G | Final XL selection, price, form ID, and URL agree |
+| Direct available variant URL | Initial selection and price match that variant |
+| Direct L variant URL | L pricing shown, L control disabled, Add to cart disabled; choosing S recovers |
+| Switch picker to Dropdown | L option disabled; available selections still update |
+| All variants sold out | No available choices; purchasing unavailable |
+
+Start with `/products/assessment-q7-size-selector?utm_source=q7-test#details` and select M. Confirm `utm_source=q7-test` and `#details` remain alongside the new variant parameter. Preserve any development preview parameters as well.
+
+To test failure, block `*option_values=*` in DevTools Network, then choose a different available size. Expect a visible selection error and disabled Add to cart. Remove blocking and choose another size (or refresh); successful loading restores synchronized state. Do not use an old cart ID while the selected size is unresolved.
+
+Inspect `#product-form-SECTION_ID input[name="id"]` and the add request's `id`. They must match the selected available size's variant ID. Test keyboard navigation and verify L is skipped. Test any quick-add/featured-product component separately if used: it must not modify the browser URL when update-url is false.
+
+Record actual results, product URL, variant IDs, and currency. Swatch rendering is supported by the disabled parameter but has not been manually verified. Q1/Q4 integration uses the existing handlers and should be checked during this run.
+
+### Verification status
+
+Implementation, syntax validation, Theme Check, four mocked automated tests, and local CSV checks are complete. No manual Q7 test outcome has been reported. Import, storefront prices, native disabled controls, cart integration, and recovery should be confirmed before marking Q7 fully complete.

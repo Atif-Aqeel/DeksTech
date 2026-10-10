@@ -742,3 +742,557 @@ During Question 3 testing, Atif Aqeel reported successful verification of two se
 Question 6 is complete. Each section instance uses its own background and padding values, while sharing the same CSS rules, preventing settings from bleeding into other instances of the section.
 
 ---
+
+## 7. Integrated Build – AJAX Variant / Size Selector
+
+### Requirement
+
+Select the correct size variant, disable out-of-stock sizes, update the displayed price and `?variant=` parameter, and perform all updates without refreshing. Provide Liquid/HTML, JavaScript, and relevant CSS.
+
+### Approach and assumptions
+
+Use Dawn's existing `variant-selects` and `product-info` components. The assessment product has one option named Size, a small variant set, differing prices, and at least one sold-out size. Strict native disabling applies only to this single-Size scope. Other product configurations retain Dawn's existing option navigation so unavailable intermediate combinations do not block access to valid combinations.
+
+The picker publishes option-value IDs; Dawn requests the updated product section and Shopify resolves the variant. The returned selected-variant data, controls, price, savings, form variant ID, and purchase state are synchronized. This avoids an extra selection handler or a full embedded variant array.
+
+### Liquid and HTML
+
+The inherited `snippets/product-variant-picker.liquid` supplies the complete picker structure:
+
+```liquid
+{%- unless product.has_only_default_variant -%}
+  <variant-selects
+    id="variant-selects-{{ section.id }}"
+    data-section="{{ section.id }}"
+    {{ block.shopify_attributes }}
+  >
+    {%- for option in product.options_with_values -%}
+      {%- liquid
+        assign swatch_count = option.values | map: 'swatch' | compact | size
+        assign picker_type = block.settings.picker_type
+
+        if swatch_count > 0 and block.settings.swatch_shape != 'none'
+          if block.settings.picker_type == 'dropdown'
+            assign picker_type = 'swatch_dropdown'
+          else
+            assign picker_type = 'swatch'
+          endif
+        endif
+      -%}
+      {%- if picker_type == 'swatch' -%}
+        <fieldset class="js product-form__input product-form__input--swatch">
+          <legend class="form__label">
+            {{ option.name }}:
+            <span data-selected-value>
+              {{- option.selected_value -}}
+            </span>
+          </legend>
+          {% render 'product-variant-options',
+            product: product,
+            option: option,
+            block: block,
+            picker_type: picker_type
+          %}
+        </fieldset>
+      {%- elsif picker_type == 'button' -%}
+        <fieldset class="js product-form__input product-form__input--pill">
+          <legend class="form__label">{{ option.name }}</legend>
+          {% render 'product-variant-options',
+            product: product,
+            option: option,
+            block: block,
+            picker_type: picker_type
+          %}
+        </fieldset>
+      {%- else -%}
+        <div class="product-form__input product-form__input--dropdown">
+          <label class="form__label" for="Option-{{ section.id }}-{{ forloop.index0 }}">
+            {{ option.name }}
+          </label>
+          <div class="select">
+            {%- if picker_type == 'swatch_dropdown' -%}
+              <span
+                data-selected-value
+                class="dropdown-swatch"
+              >
+                {% render 'swatch', swatch: option.selected_value.swatch, shape: block.settings.swatch_shape %}
+              </span>
+            {%- endif -%}
+            <select
+              id="Option-{{ section.id }}-{{ forloop.index0 }}"
+              class="select__select"
+              name="options[{{ option.name | escape }}]"
+              form="{{ product_form_id }}"
+            >
+              {% render 'product-variant-options',
+                product: product,
+                option: option,
+                block: block,
+                picker_type: picker_type
+              %}
+            </select>
+            <span class="svg-wrapper">
+              {{- 'icon-caret.svg' | inline_asset_content -}}
+            </span>
+          </div>
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+
+    <script type="application/json" data-selected-variant>
+      {{ product.selected_or_first_available_variant | json }}
+    </script>
+  </variant-selects>
+{%- endunless -%}
+```
+
+The updated `snippets/product-variant-options.liquid` renders the size controls, including actual disabled attributes:
+
+```liquid
+{%- liquid
+  assign product_form_id = 'product-form-' | append: section.id
+  assign option_name = option.name | handleize
+  assign disable_unavailable_sizes = false
+  if product.options.size == 1 and option_name == 'size'
+    assign disable_unavailable_sizes = true
+  endif
+-%}
+
+{%- for value in option.values -%}
+  {%- liquid
+    assign swatch_focal_point = null
+    if value.swatch.image
+      assign image_url = value.swatch.image | image_url: width: 50
+      assign swatch_value = 'url(' | append: image_url | append: ')'
+      assign swatch_focal_point = value.swatch.image.presentation.focal_point
+    elsif value.swatch.color
+      assign swatch_value = 'rgb(' | append: value.swatch.color.rgb | append: ')'
+    else
+      assign swatch_value = null
+    endif
+
+    assign option_disabled = true
+    if value.available
+      assign option_disabled = false
+    endif
+    assign input_disabled = false
+    if disable_unavailable_sizes and option_disabled
+      assign input_disabled = true
+    endif
+  -%}
+
+  {%- capture input_id -%}
+    {{ section.id }}-{{ option.position }}-{{ forloop.index0 -}}
+  {%- endcapture -%}
+
+  {%- capture input_name -%}
+    {{ option.name }}-{{ option.position }}
+  {%- endcapture -%}
+
+  {%- capture input_dataset -%}
+    data-product-url="{{ value.product_url }}"
+    data-option-value-id="{{ value.id }}"
+  {%- endcapture -%}
+
+  {%- capture label_unavailable -%}
+    <span class="visually-hidden label-unavailable">
+      {{- 'products.product.variant_sold_out_or_unavailable' | t -}}
+    </span>
+  {%- endcapture -%}
+
+  {%- if picker_type == 'swatch' -%}
+    {%- assign escaped_value = value | escape -%}
+    {%- capture help_text -%}
+      <span class="visually-hidden">{{ value | escape }}</span>
+      {{ label_unavailable }}
+    {%- endcapture -%}
+    {%
+      render 'swatch-input',
+      id: input_id,
+      name: input_name,
+      value: escaped_value,
+      swatch: value.swatch,
+      product_form_id: product_form_id,
+      checked: value.selected,
+      disabled: input_disabled,
+      visually_disabled: option_disabled,
+      shape: block.settings.swatch_shape,
+      help_text: help_text,
+      additional_props: input_dataset
+    %}
+  {%- elsif picker_type == 'button' -%}
+    <input
+      type="radio"
+      id="{{ input_id }}"
+      name="{{ input_name | escape }}"
+      value="{{ value | escape }}"
+      form="{{ product_form_id }}"
+      {% if value.selected %}
+        checked
+      {% endif %}
+      {% if option_disabled %}
+        class="disabled"
+      {% endif %}
+      {% if input_disabled %}
+        disabled
+      {% endif %}
+      {{ input_dataset }}
+    >
+    <label for="{{ input_id }}">
+      {{ value -}}
+      {{ label_unavailable }}
+    </label>
+  {%- elsif picker_type == 'dropdown' or picker_type == 'swatch_dropdown' -%}
+    <option
+      id="{{ input_id }}"
+      value="{{ value | escape }}"
+      {% if value.selected %}
+        selected="selected"
+      {% endif %}
+      {% if input_disabled %}
+        disabled
+      {% endif %}
+      {% if swatch_value and picker_type == 'swatch_dropdown' %}
+        data-option-swatch-value="{{ swatch_value }}"
+        {% if swatch_focal_point %}
+          data-option-swatch-focal-point="{{ swatch_focal_point }}"
+        {% endif %}
+      {% endif %}
+      {{ input_dataset }}
+    >
+      {% if option_disabled -%}
+        {{- 'products.product.value_unavailable' | t: option_value: value -}}
+      {%- else -%}
+        {{- value -}}
+      {%- endif %}
+    </option>
+  {%- endif -%}
+{%- endfor -%}
+```
+
+Swatches use Dawn's existing `swatch-input` snippet, whose optional `disabled` parameter produces the native attribute. The product form retains its hidden `name="id"` field, initially set to `product.selected_or_first_available_variant.id`; the JavaScript updates it after size selection. The existing main-product price wrapper is `#price-{{ section.id }}` with `role="status"`, allowing price and Question 1 savings to update together.
+
+### JavaScript
+
+Dawn's inherited `VariantSelects` class in `assets/global.js` publishes changes using selected option-value IDs:
+
+```javascript
+class VariantSelects extends HTMLElement {
+  constructor() {
+    super();
+  }
+
+  connectedCallback() {
+    this.addEventListener('change', (event) => {
+      const target = this.getInputForEventTarget(event.target);
+      this.updateSelectionMetadata(event);
+
+      publish(PUB_SUB_EVENTS.optionValueSelectionChange, {
+        data: {
+          event,
+          target,
+          selectedOptionValues: this.selectedOptionValues,
+        },
+      });
+    });
+  }
+
+  updateSelectionMetadata({ target }) {
+    const { value, tagName } = target;
+
+    if (tagName === 'SELECT' && target.selectedOptions.length) {
+      Array.from(target.options)
+        .find((option) => option.getAttribute('selected'))
+        .removeAttribute('selected');
+      target.selectedOptions[0].setAttribute('selected', 'selected');
+
+      const swatchValue = target.selectedOptions[0].dataset.optionSwatchValue;
+      const selectedDropdownSwatchValue = target
+        .closest('.product-form__input')
+        .querySelector('[data-selected-value] > .swatch');
+      if (!selectedDropdownSwatchValue) return;
+      if (swatchValue) {
+        selectedDropdownSwatchValue.style.setProperty('--swatch--background', swatchValue);
+        selectedDropdownSwatchValue.classList.remove('swatch--unavailable');
+      } else {
+        selectedDropdownSwatchValue.style.setProperty('--swatch--background', 'unset');
+        selectedDropdownSwatchValue.classList.add('swatch--unavailable');
+      }
+
+      selectedDropdownSwatchValue.style.setProperty(
+        '--swatch-focal-point',
+        target.selectedOptions[0].dataset.optionSwatchFocalPoint || 'unset'
+      );
+    } else if (tagName === 'INPUT' && target.type === 'radio') {
+      const selectedSwatchValue = target.closest(`.product-form__input`).querySelector('[data-selected-value]');
+      if (selectedSwatchValue) selectedSwatchValue.innerHTML = value;
+    }
+  }
+
+  getInputForEventTarget(target) {
+    return target.tagName === 'SELECT' ? target.selectedOptions[0] : target;
+  }
+
+  get selectedOptionValues() {
+    return Array.from(this.querySelectorAll('select option[selected], fieldset input:checked')).map(
+      ({ dataset }) => dataset.optionValueId
+    );
+  }
+}
+
+customElements.define('variant-selects', VariantSelects);
+```
+
+The following actual methods from the updated `assets/product-info.js` handle option changes, requests, returned prices, form IDs, and the URL. They remain methods of Dawn's existing ProductInfo class, which subscribes to option changes in `connectedCallback()`; no second handler is attached:
+
+```javascript
+      handleOptionValueChange({ data: { event, target, selectedOptionValues } }) {
+        if (!this.contains(event.target)) return;
+
+        this.resetProductFormState();
+
+        const productUrl = target.dataset.productUrl || this.pendingRequestUrl || this.dataset.url;
+        this.pendingRequestUrl = productUrl;
+        const shouldSwapProduct = this.dataset.url !== productUrl;
+        const shouldFetchFullPage = this.dataset.updateUrl === 'true' && shouldSwapProduct;
+
+        this.renderProductInfo({
+          requestUrl: this.buildRequestUrlWithParams(productUrl, selectedOptionValues, shouldFetchFullPage),
+          targetId: target.id,
+          callback: shouldSwapProduct
+            ? this.handleSwapProduct(productUrl, shouldFetchFullPage)
+            : this.handleUpdateProductInfo(productUrl),
+        });
+      }
+
+      resetProductFormState() {
+        const productForm = this.productForm;
+        productForm?.toggleSubmitButton(true);
+        productForm?.handleErrorMessage();
+      }
+
+      handleSwapProduct(productUrl, updateFullPage) {
+        return (html) => {
+          this.productModal?.remove();
+
+          const selector = updateFullPage ? "product-info[id^='MainProduct']" : 'product-info';
+          const variant = this.getSelectedVariant(html.querySelector(selector));
+          this.updateURL(productUrl, variant?.id);
+
+          if (updateFullPage) {
+            document.querySelector('head title').innerHTML = html.querySelector('head title').innerHTML;
+
+            HTMLUpdateUtility.viewTransition(
+              document.querySelector('main'),
+              html.querySelector('main'),
+              this.preProcessHtmlCallbacks,
+              this.postProcessHtmlCallbacks
+            );
+          } else {
+            HTMLUpdateUtility.viewTransition(
+              this,
+              html.querySelector('product-info'),
+              this.preProcessHtmlCallbacks,
+              this.postProcessHtmlCallbacks
+            );
+          }
+        };
+      }
+
+      renderProductInfo({ requestUrl, targetId, callback }) {
+        this.abortController?.abort();
+        this.abortController = new AbortController();
+        const requestController = this.abortController;
+
+        fetch(requestUrl, { signal: requestController.signal })
+          .then((response) => {
+            if (!response.ok) throw new Error('Variant request failed');
+            return response.text();
+          })
+          .then((responseText) => {
+            if (requestController.signal.aborted || requestController !== this.abortController) return;
+            this.pendingRequestUrl = null;
+            const html = new DOMParser().parseFromString(responseText, 'text/html');
+            if (!html.querySelector('product-info')) {
+              throw new Error('Variant response is missing product data');
+            }
+            callback(html);
+          })
+          .then(() => {
+            if (requestController.signal.aborted || requestController !== this.abortController) return;
+            // set focus to last clicked option value
+            document.querySelector(`#${targetId}`)?.focus();
+          })
+          .catch((error) => {
+            if (error.name === 'AbortError') {
+              console.log('Fetch aborted by user');
+            } else {
+              if (requestController !== this.abortController) return;
+              this.pendingRequestUrl = null;
+              this.productForm?.toggleSubmitButton(true);
+              this.productForm?.handleErrorMessage(window.variantStrings.selectionError);
+              console.error(error);
+            }
+          });
+      }
+
+      getSelectedVariant(productInfoNode) {
+        const selectedVariant = productInfoNode.querySelector('variant-selects [data-selected-variant]')?.innerHTML;
+        return !!selectedVariant ? JSON.parse(selectedVariant) : null;
+      }
+
+      buildRequestUrlWithParams(url, optionValues, shouldFetchFullPage = false) {
+        const params = [];
+
+        !shouldFetchFullPage && params.push(`section_id=${this.sectionId}`);
+
+        if (optionValues.length) {
+          params.push(`option_values=${optionValues.join(',')}`);
+        }
+
+        return `${url}?${params.join('&')}`;
+      }
+
+      updateOptionValues(html) {
+        const variantSelects = html.querySelector('variant-selects');
+        if (variantSelects) {
+          HTMLUpdateUtility.viewTransition(this.variantSelectors, variantSelects, this.preProcessHtmlCallbacks);
+        }
+      }
+
+      handleUpdateProductInfo(productUrl) {
+        return (html) => {
+          const variant = this.getSelectedVariant(html);
+
+          this.pickupAvailability?.update(variant);
+          this.updateOptionValues(html);
+          this.updateURL(productUrl, variant?.id);
+          this.updateVariantInputs(variant?.id);
+
+          if (!variant) {
+            this.setUnavailable();
+            return;
+          }
+
+          this.updateMedia(html, variant?.featured_media?.id);
+
+          const updateSourceFromDestination = (id, shouldHide = (source) => false) => {
+            const source = html.getElementById(`${id}-${this.sectionId}`);
+            const destination = this.querySelector(`#${id}-${this.dataset.section}`);
+            if (source && destination) {
+              destination.innerHTML = source.innerHTML;
+              destination.classList.toggle('hidden', shouldHide(source));
+            }
+          };
+
+          updateSourceFromDestination('price');
+          updateSourceFromDestination('Sku', ({ classList }) => classList.contains('hidden'));
+          updateSourceFromDestination('Inventory', ({ innerText }) => innerText === '');
+          updateSourceFromDestination('Volume');
+          updateSourceFromDestination('Price-Per-Item', ({ classList }) => classList.contains('hidden'));
+
+          this.updateQuantityRules(this.sectionId, html);
+          this.querySelector(`#Quantity-Rules-${this.dataset.section}`)?.classList.remove('hidden');
+          this.querySelector(`#Volume-Note-${this.dataset.section}`)?.classList.remove('hidden');
+
+          this.productForm?.toggleSubmitButton(
+            html.getElementById(`ProductSubmitButton-${this.sectionId}`)?.hasAttribute('disabled') ?? true,
+            window.variantStrings.soldOut
+          );
+
+          publish(PUB_SUB_EVENTS.variantChange, {
+            data: {
+              sectionId: this.sectionId,
+              html,
+              variant,
+            },
+          });
+        };
+      }
+
+      updateVariantInputs(variantId) {
+        this.querySelectorAll(
+          `#product-form-${this.dataset.section}, #product-form-installment-${this.dataset.section}`
+        ).forEach((productForm) => {
+          const input = productForm.querySelector('input[name="id"]');
+          input.value = variantId ?? '';
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      }
+
+      updateURL(url, variantId) {
+        this.querySelector('share-button')?.updateUrl(
+          `${window.shopUrl}${url}${variantId ? `?variant=${variantId}` : ''}`
+        );
+
+        if (this.dataset.updateUrl === 'false') return;
+        const nextUrl = new URL(window.location.href);
+        const productUrl = new URL(url, window.location.origin);
+        nextUrl.pathname = productUrl.pathname;
+        productUrl.searchParams.forEach((value, key) => nextUrl.searchParams.set(key, value));
+        if (variantId) {
+          nextUrl.searchParams.set('variant', variantId);
+        } else {
+          nextUrl.searchParams.delete('variant');
+        }
+        window.history.replaceState(window.history.state, '', `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+      }
+```
+
+The existing component also supplies media, quantity, pickup availability, and product-swap helpers used by these methods. Its `disconnectedCallback()` now aborts the active variant request as well as unsubscribing from Dawn events.
+
+The browser URL update uses the URL API to preserve unrelated query parameters, the fragment, and existing history state. It changes only the product path, any explicit parameters on the target product URL, and the variant parameter. Embedded components with `data-update-url="false"` do not change the browser URL. The share button retains Dawn's product/variant share URL rather than copying preview and tracking parameters.
+
+The layout adds this entry to `window.variantStrings`:
+
+```liquid
+selectionError: {{ 'assessment.variant_selection_error' | t | json }},
+```
+
+The English locale adds this key under `assessment`:
+
+```json
+"variant_selection_error": "This size could not be loaded. Select a size again or refresh the page before adding to cart."
+```
+
+### CSS
+
+Dawn already styles disabled pills with a muted color and strike-through. The implementation adds a disabled cursor; the relevant rules in `assets/component-product-variant-picker.css` are:
+
+```css
+variant-selects input[type='radio']:disabled + label {
+  cursor: not-allowed;
+}
+
+.product-form__input--pill input[type='radio']:disabled + label,
+.product-form__input--pill input[type='radio'].disabled + label {
+  border-color: rgba(var(--color-foreground), 0.1);
+  color: rgba(var(--color-foreground), 0.6);
+  text-decoration: line-through;
+}
+```
+
+### Edge cases and considerations
+
+- A valid direct variant link uses that variant's initial price and selection. A sold-out variant may remain the displayed selection when opened directly, but its control and purchase action are disabled; available sizes remain selectable.
+- A product whose every size is sold out has no selectable available size and cannot be purchased.
+- Availability follows Shopify's purchasing rules; disable continue-selling on inventory-tracked sold-out test variants.
+- On selection, Dawn disables purchasing until the corresponding variant response is applied. Failed requests leave purchasing disabled and display an error, preventing an old variant from being added under a newly selected size.
+- Aborted or superseded responses cannot overwrite the latest selection. Requests are also aborted when the component is removed.
+- Variant price is rendered by Shopify with the existing money filters; no currency formatting is reconstructed from a JavaScript number.
+- Multi-option products require matching the complete option combination. Dawn already sends all selected option-value IDs; strict disabling of individual sizes would require a deliberate combination-availability policy and is outside this Size-only example.
+- The implementation does not embed `product.variants` and does not claim that a small variant map supports all high-variant products.
+
+### Verification
+
+JavaScript syntax and whitespace checks passed. Four automated tests in `tests/q7-variants.test.cjs` passed: preserving URL parameters/hash/history state, removing unresolved variants and respecting embedded URL behavior, keeping purchasing disabled after a failed response, and rejecting a late superseded response.
+
+Shopify Theme Check passed the option snippet, JavaScript, CSS, and English locale without findings. The layout retains one warning in inherited code (`scheme_classes`). Tests use mocked requests and DOM elements. Live size selection, native disabled controls, price updates, and cart integration have not yet been manually verified.
+
+The reusable fixture `test-data/q7-product.csv` contains one Size-only product with S, M, L, and XL variants priced at 20, 25, 30, and 35 respectively. M has a compare-at price of 30; L has zero inventory and selling beyond stock is disabled. The CSV was checked locally for one product, four unique sizes, and the intended stock distribution. This prepares repeatable storefront verification without claiming a successful import or browser result.
+
+### Result
+
+The integrated Dawn size selector has native disabled sold-out controls for the stated scope, server-rendered variant pricing, synchronized form IDs, and URL updates that retain unrelated parameters. It is ready for development-preview testing without adding duplicate selection or cart handlers.
+
+---

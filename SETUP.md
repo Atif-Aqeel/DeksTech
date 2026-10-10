@@ -54,3 +54,9 @@ Status: complete as a written answer under the revised question-specific workflo
 ## Question 6
 
 Status: complete using the existing Question 3 Feature section. Verified the instance-level background/padding custom-property declarations and shared static CSS. The written answer includes the actual schema/wrapper/CSS excerpts and reuses Atif's reported two-instance test from Question 3. No additional theme changes or new browser test was performed.
+
+## Question 7
+
+Implemented targeted extensions to Dawn's existing picker: native disabled attributes for unavailable values on a single option named Size, disabled-label cursor, parameter-preserving variant URLs, HTTP/response validation, user-visible selection errors, superseded-request guards, and abort on disconnect. Added four mocked automated tests, all passed. Theme Check passed with one inherited layout warning. Manual development-preview checks are pending; TESTING.md contains the Size-only product fixture and scenarios. No duplicate variant listener or full variant array was introduced.
+
+Created and locally checked `test-data/q7-product.csv` for direct product import: one product, four Size variants, three stocked and L sold out. Updated the guided storefront test with the local preview URL, expected prices/savings, cart selection, parameter preservation, direct links, rapid switching, dropdown/keyboard controls, and request failure recovery. Q7 remains awaiting user-reported manual results; no successful import or storefront test is inferred from providing the file and instructions.
