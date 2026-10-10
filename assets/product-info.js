@@ -48,6 +48,7 @@ if (!customElements.get('product-info')) {
       disconnectedCallback() {
         this.onVariantChangeUnsubscriber();
         this.cartUpdateUnsubscriber?.();
+        this.abortController?.abort();
       }
 
       initializeProductSwapUtility() {
@@ -116,15 +117,24 @@ if (!customElements.get('product-info')) {
       renderProductInfo({ requestUrl, targetId, callback }) {
         this.abortController?.abort();
         this.abortController = new AbortController();
+        const requestController = this.abortController;
 
-        fetch(requestUrl, { signal: this.abortController.signal })
-          .then((response) => response.text())
+        fetch(requestUrl, { signal: requestController.signal })
+          .then((response) => {
+            if (!response.ok) throw new Error('Variant request failed');
+            return response.text();
+          })
           .then((responseText) => {
+            if (requestController.signal.aborted || requestController !== this.abortController) return;
             this.pendingRequestUrl = null;
             const html = new DOMParser().parseFromString(responseText, 'text/html');
+            if (!html.querySelector('product-info')) {
+              throw new Error('Variant response is missing product data');
+            }
             callback(html);
           })
           .then(() => {
+            if (requestController.signal.aborted || requestController !== this.abortController) return;
             // set focus to last clicked option value
             document.querySelector(`#${targetId}`)?.focus();
           })
@@ -132,6 +142,10 @@ if (!customElements.get('product-info')) {
             if (error.name === 'AbortError') {
               console.log('Fetch aborted by user');
             } else {
+              if (requestController !== this.abortController) return;
+              this.pendingRequestUrl = null;
+              this.productForm?.toggleSubmitButton(true);
+              this.productForm?.handleErrorMessage(window.variantStrings.selectionError);
               console.error(error);
             }
           });
@@ -227,7 +241,16 @@ if (!customElements.get('product-info')) {
         );
 
         if (this.dataset.updateUrl === 'false') return;
-        window.history.replaceState({}, '', `${url}${variantId ? `?variant=${variantId}` : ''}`);
+        const nextUrl = new URL(window.location.href);
+        const productUrl = new URL(url, window.location.origin);
+        nextUrl.pathname = productUrl.pathname;
+        productUrl.searchParams.forEach((value, key) => nextUrl.searchParams.set(key, value));
+        if (variantId) {
+          nextUrl.searchParams.set('variant', variantId);
+        } else {
+          nextUrl.searchParams.delete('variant');
+        }
+        window.history.replaceState(window.history.state, '', `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
       }
 
       setUnavailable() {

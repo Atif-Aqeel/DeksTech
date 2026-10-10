@@ -18,6 +18,11 @@
 {% endcomment %}
 {%- liquid
   assign product_form_id = 'product-form-' | append: section.id
+  assign option_name = option.name | handleize
+  assign disable_unavailable_sizes = false
+  if product.options.size == 1 and option_name == 'size'
+    assign disable_unavailable_sizes = true
+  endif
 -%}
 
 {%- for value in option.values -%}
@@ -36,6 +41,10 @@
     assign option_disabled = true
     if value.available
       assign option_disabled = false
+    endif
+    assign input_disabled = false
+    if disable_unavailable_sizes and option_disabled
+      assign input_disabled = true
     endif
   -%}
 
@@ -72,6 +81,7 @@
       swatch: value.swatch,
       product_form_id: product_form_id,
       checked: value.selected,
+      disabled: input_disabled,
       visually_disabled: option_disabled,
       shape: block.settings.swatch_shape,
       help_text: help_text,
@@ -90,6 +100,9 @@
       {% if option_disabled %}
         class="disabled"
       {% endif %}
+      {% if input_disabled %}
+        disabled
+      {% endif %}
       {{ input_dataset }}
     >
     <label for="{{ input_id }}">
@@ -102,6 +115,9 @@
       value="{{ value | escape }}"
       {% if value.selected %}
         selected="selected"
+      {% endif %}
+      {% if input_disabled %}
+        disabled
       {% endif %}
       {% if swatch_value and picker_type == 'swatch_dropdown' %}
         data-option-swatch-value="{{ swatch_value }}"

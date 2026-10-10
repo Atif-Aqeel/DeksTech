@@ -2,6 +2,10 @@ variant-selects {
   display: block;
 }
 
+variant-selects input[type='radio']:disabled + label {
+  cursor: not-allowed;
+}
+
 .product--no-media .product-form__input--pill,
 .product--no-media .product-form__input--swatch,
 .product--no-media .product-form__input--dropdown {
