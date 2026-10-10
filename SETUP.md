@@ -50,3 +50,7 @@ Extended Dawn's existing product-form handler with bundled section validation, o
 ## Question 5
 
 Status: complete as a written answer under the revised question-specific workflow. The submission explains dynamic DOM replacement, instance initialization/cleanup, section and block event responsibilities, autoplay pause conditions, and Dawn integration. Event names were checked against official Shopify documentation. No theme code was modified and no Q5 browser tests were performed; verification scenarios are explicitly proposed only.
+
+## Question 6
+
+Status: complete using the existing Question 3 Feature section. Verified the instance-level background/padding custom-property declarations and shared static CSS. The written answer includes the actual schema/wrapper/CSS excerpts and reuses Atif's reported two-instance test from Question 3. No additional theme changes or new browser test was performed.

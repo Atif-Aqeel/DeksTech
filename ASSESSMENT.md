@@ -675,3 +675,70 @@ Reference: [Shopify Theme Editor lifecycle](https://shopify.dev/docs/storefronts
 The proposed solution addresses the carousel failure by initializing against the current section DOM, cleaning up replaced instances, preventing duplicate initialization, and maintaining selected-slide visibility. The written answer covers the cause, fix, and lifecycle handlers required by Question 5.
 
 ---
+
+## 6. Per-Instance CSS Without Style Bleed
+
+### Requirement
+
+Allow two instances of the same section to use different background colors selected in the Theme Editor, without one instance's styles affecting the other.
+
+### Approach and assumptions
+
+Set CSS custom properties on each instance's wrapper and consume them in shared static CSS. The declaration belongs to that DOM element, so every instance can use a different value without generating competing background rules for the same shared class.
+
+This reuses the Feature section implemented in Question 3. Background and padding are section settings, not global theme settings. An inline custom property is appropriate for these simple property values; a selector based on `section.id` would also work when more complex instance-specific rules are needed.
+
+### Implementation
+
+The section setting in `sections/assessment-features.liquid` is:
+
+```json
+{
+  "type": "color",
+  "id": "background_color",
+  "label": "t:assessment_features.background_color",
+  "default": "#ffffff"
+}
+```
+
+The actual section wrapper outputs the selected values:
+
+```liquid
+<div
+  class="assessment-features"
+  style="--feature-background: {{ section.settings.background_color }}; --feature-padding: {{ section.settings.padding }}px;"
+>
+```
+
+The corresponding rules, inside the section's existing `{% stylesheet %}` block, are:
+
+```css
+.assessment-features {
+  background-color: var(--feature-background);
+  padding-block: var(--feature-padding);
+}
+```
+
+The rest of the wrapper content and closing tag are shown in the complete Question 3 section source. No second component or duplicate stylesheet is required.
+
+For example, one instance can set `--feature-background: #f3f8ff` while another sets `--feature-background: #fff4e5`. The same background-color rule resolves each element's own value. Editing the first instance does not overwrite the second's setting.
+
+### Edge cases and considerations
+
+- Do not emit a shared `.assessment-features { background-color: SELECTED_COLOR; }` rule for each instance: the rules target both wrappers and can compete in the cascade.
+- Output Liquid values in HTML or a Liquid-rendered style block. Liquid is not evaluated inside `{% stylesheet %}`.
+- Keep the custom properties on the component wrapper rather than `:root`, and use component-specific property names. Descendants inherit them, while sibling section instances remain independent.
+- Each nested Feature section wrapper sets its own values if nesting is introduced later.
+- Merchant-selected backgrounds should retain sufficient contrast with the inherited text color.
+
+### Verification
+
+The existing Feature section passed Shopify Theme Check without warnings or errors. Static review confirmed that background and padding values are declared on the instance wrapper and consumed by shared static CSS.
+
+During Question 3 testing, Atif Aqeel reported successful verification of two section instances with independent settings on October 10, 2026. Question 6 reuses that implementation and reported test; no new code or separate browser test was needed.
+
+### Result
+
+Question 6 is complete. Each section instance uses its own background and padding values, while sharing the same CSS rules, preventing settings from bleeding into other instances of the section.
+
+---

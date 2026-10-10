@@ -173,3 +173,9 @@ Record counts, selected/returned variant, mode, and errors before updating submi
 - Guided coverage: selected variants, quantities and header count, no reload, duplicate clicks, inventory rejection, blocked-request feedback, and Notification/Drawer modes.
 - Evidence source: user-run manual testing; no individual counts, request logs, or screenshots were supplied, and the assistant did not independently observe the browser.
 - Missing-section recovery and failure were covered by mocks; their browser simulation, Cart page mode, keyboard focus, and real alternate-locale behavior have no separately recorded manual outcome.
+
+## Question 6: independent section instances
+
+Reuses the two-instance isolation test reported complete during Question 3 on October 10, 2026. No separate Q6 browser session or additional code changes were needed. The source puts each instance's background and padding values on its wrapper; the submission documents that implementation.
+
+For repeat testing, add two Assessment features sections with different background/padding values. Change each instance in turn, save, and refresh. Each wrapper should retain its own settings. The example colors in the guide are suggested repeat-test data, not separately recorded actual values from the user-run test.
