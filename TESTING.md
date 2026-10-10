@@ -239,3 +239,29 @@ Record actual results, product URL, variant IDs, and currency. Swatch rendering 
 ### Verification status
 
 Implementation, syntax validation, Theme Check, four mocked automated tests, and local CSV checks are complete. No manual Q7 test outcome has been reported. Import, storefront prices, native disabled controls, cart integration, and recovery should be confirmed before marking Q7 fully complete.
+
+## Question 8: product care metafields
+
+Atif confirmed both definitions and values on two products and reported successful completion of the guided development-preview tests on October 10, 2026. The following steps are retained for repeat testing.
+
+1. Keep the development theme running. Open its Theme Editor and choose the product template used by Product A.
+2. In Product information, choose Add block → Care instructions. Position it below the price/buy buttons and save. Adding the block to a shared product template makes it available to every product using that template; content still comes from each product's own metafields.
+3. Open Product A in the development preview. Confirm its own instructions and a second heading identifying Product B, with B's care instructions underneath.
+4. Verify paragraphs, bullets, and emphasis match the rich-text values you entered. Text must not appear as raw JSON or HTML source.
+5. Edit Product B's instructions in Admin, save, and refresh Product A. The related group must use the updated content.
+6. Temporarily clear A's related reference. Its own group remains and the related group disappears. Restore the reference.
+7. Temporarily clear A's own instructions while keeping B's reference. Only B's group appears. Restore A's instructions.
+8. Clear B's instructions temporarily. A's own group remains without an empty related heading. Restore B's instructions.
+9. On a product without either field populated, confirm no empty care wrapper or heading appears.
+10. Optionally reference A from A: the implementation intentionally suppresses the duplicate related group. Restore B afterwards.
+
+Check mobile formatting and block repositioning in the editor. These are product-level fields; ordinary variant changes should leave care content unchanged. Use refresh after Admin edits, allowing for normal storefront caching.
+
+Record the tested product URLs, actual rich-text rendering, missing-data behavior, and pass/fail before finalizing Q8. Test products can reuse existing assessment products; no additional product import is necessary.
+
+### Reported results
+
+- Q8 is complete based on definition setup, Theme Check, and Atif's successful manual-testing report.
+- Guided coverage: editor block insertion, both products' care content and formatting, referenced-content updates after refresh, missing reference, missing current care, and empty output when neither field is populated.
+- Evidence source: user-run testing. Product URLs, screenshots, and per-case results were not supplied; the assistant did not independently observe the browser.
+- Self-reference, mobile formatting, and product-swap behavior have no separately recorded test outcome.

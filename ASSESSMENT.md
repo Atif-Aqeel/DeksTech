@@ -1296,3 +1296,139 @@ The reusable fixture `test-data/q7-product.csv` contains one Size-only product w
 The integrated Dawn size selector has native disabled sold-out controls for the stated scope, server-rendered variant pricing, synchronized form IDs, and URL updates that retain unrelated parameters. It is ready for development-preview testing without adding duplicate selection or cart handlers.
 
 ---
+
+## 8. Metafields: Definition, Rendering & References
+
+### Requirement
+
+Define merchant-editable Care Instructions for products, render them on the product page, and display care instructions from a related product. Provide the Liquid.
+
+### Approach and assumptions
+
+Use a merchant-owned rich-text product metafield for instructions and a single product-reference metafield for the relationship. Rich text supports paragraphs and lists; a reference avoids hardcoded product handles. Both definitions are created in Shopify Admin, independently of theme deployment.
+
+### Definitions and values
+
+In Settings → Metafields and metaobjects → Products, create:
+
+| Name | Namespace and key | Type | Purpose |
+|---|---|---|---|
+| Care Instructions | `custom.care_instructions` | Rich text (`rich_text_field`) | Merchant-edited care content |
+| Care Related Product | `custom.care_related_product` | One product (`product_reference`) | Related product whose care is displayed |
+
+Pin the definitions for convenient editing. They make fields available on all products but do not populate every product automatically. Enter values in each product's Metafields area.
+
+For example, Product A can contain a list stating Wash cold, Do not bleach, and Dry flat, with its related-product field referencing Product B. Product B can contain Wipe with a damp cloth, Avoid soaking, and Air dry. These are illustrative values; the merchant enters content appropriate to the products. Both products should be available to the Online Store for storefront testing.
+
+### Implementation
+
+Add a Care instructions block to Dawn's main product section. The merchant can position this block using the Theme Editor; its schema permits one instance per product section.
+
+The complete `snippets/assessment-care-instructions.liquid` is:
+
+```liquid
+{% doc %}
+  Renders product care instructions and care from one referenced product.
+  @param {product} product - Current product.
+  @param {object} block - Product section block.
+{% enddoc %}
+{%- liquid
+  assign care = product.metafields.custom.care_instructions
+  assign related_product = product.metafields.custom.care_related_product.value
+  assign show_care = false
+  assign show_related_care = false
+  if care != blank and care.type == 'rich_text_field'
+    assign show_care = true
+  endif
+  if related_product != blank and related_product.id != product.id
+    assign related_care = related_product.metafields.custom.care_instructions
+    if related_care != blank and related_care.type == 'rich_text_field'
+      assign show_related_care = true
+    endif
+  endif
+-%}
+{%- if show_care or show_related_care -%}
+  <div class="assessment-care quick-add-hidden" {{ block.shopify_attributes }}>
+    {%- if show_care -%}
+      <div class="assessment-care__group">
+        <h2 class="h4">{{ 'assessment.care_heading' | t }}</h2>
+        <div class="rte">{{ care | metafield_tag }}</div>
+      </div>
+    {%- endif -%}
+    {%- if show_related_care -%}
+      <div class="assessment-care__group">
+        <h2 class="h4">
+          {%- assign related_title = related_product.title | escape -%}
+          {{- 'assessment.related_care_heading' | t: product: related_title -}}
+        </h2>
+        <div class="rte">{{ related_care | metafield_tag }}</div>
+      </div>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .assessment-care__group + .assessment-care__group {
+    margin-top: 2.4rem;
+  }
+{% endstylesheet %}
+```
+
+The main-product block rendering includes:
+
+```liquid
+{%- when 'care_instructions' -%}
+  {% render 'assessment-care-instructions', product: product, block: block %}
+```
+
+The added block schema is:
+
+```json
+{
+  "type": "care_instructions",
+  "name": "t:assessment_care.name",
+  "limit": 1
+}
+```
+
+The English storefront locale adds the following keys under `assessment`:
+
+```json
+"care_heading": "Care instructions",
+"related_care_heading": "Care instructions for {{ product }}"
+```
+
+The English schema locale adds:
+
+```json
+"assessment_care": {
+  "name": "Care instructions"
+}
+```
+
+Pass the rich-text metafield itself to `metafield_tag` to generate formatted HTML. Resolve the product-reference metafield with `.value` to obtain the related product object, then read that product's care metafield. The related heading identifies the referenced product and escapes its title.
+
+### Edge cases and considerations
+
+- Missing current-product instructions omit that group; related instructions can still display.
+- An unset or unresolved reference, or a referenced product without care content, omits the related group.
+- If neither group has content, no empty wrapper or heading renders.
+- A self-reference is ignored to avoid displaying the same product's instructions twice.
+- Incorrect metafield types are not rendered as rich text; definition types must match the documented setup.
+- This resolves one reference only, without recursive related-product traversal.
+- The content is product-level and does not change between variants of the same product. It follows the current product when a full product section is replaced.
+- Dawn's existing `rte` styling formats the content. The block uses Theme Editor attributes and follows Dawn's quick-add-hidden convention.
+
+### Verification
+
+Atif confirmed creating both definitions and populating two products. Shopify Theme Check passed the care snippet and both English locale files without findings. The main product section passed with two warnings in inherited Dawn code (unused `seo_media` and unknown `continue`). Locale JSON parsing and whitespace checks passed.
+
+Atif Aqeel reported successful completion of the guided development-preview tests on October 10, 2026. The checks covered adding the Care instructions block, rendering the current and referenced product's formatted instructions, reflecting changes to the referenced product after refresh, removing the reference, clearing the current product's instructions, and omitting empty output when neither field is populated.
+
+References: [Creating metafield definitions](https://help.shopify.com/en/manual/custom-data/metafields/metafield-definitions/creating-custom-metafield-definitions), [metafield_tag](https://shopify.dev/docs/api/liquid/filters/metafield_tag), [Metafield values](https://shopify.dev/docs/api/liquid/objects/metafield).
+
+### Result
+
+Question 8 is complete based on the configured definitions, implemented Liquid, static validation, and reported manual tests. The product block renders merchant-edited formatted care instructions for the current product and one explicitly referenced product, with missing-data guards and no hardcoded product handles.
+
+---

@@ -60,3 +60,11 @@ Status: complete using the existing Question 3 Feature section. Verified the ins
 Implemented targeted extensions to Dawn's existing picker: native disabled attributes for unavailable values on a single option named Size, disabled-label cursor, parameter-preserving variant URLs, HTTP/response validation, user-visible selection errors, superseded-request guards, and abort on disconnect. Added four mocked automated tests, all passed. Theme Check passed with one inherited layout warning. Manual development-preview checks are pending; TESTING.md contains the Size-only product fixture and scenarios. No duplicate variant listener or full variant array was introduced.
 
 Created and locally checked `test-data/q7-product.csv` for direct product import: one product, four Size variants, three stocked and L sold out. Updated the guided storefront test with the local preview URL, expected prices/savings, cart selection, parameter preservation, direct links, rapid switching, dropdown/keyboard controls, and request failure recovery. Q7 remains awaiting user-reported manual results; no successful import or storefront test is inferred from providing the file and instructions.
+
+## Question 8
+
+Status: complete based on definition setup, static validation, and Atif's successful guided preview-testing report on October 10, 2026.
+
+Atif created the rich-text care and single product-reference definitions and populated two products. Added a reusable care snippet and a one-per-section Care instructions block to main-product, with translated headings/editor label, rich-text rendering, .value reference resolution, missing-data/type guards, and self-reference suppression. The block is added through the development Theme Editor; the source does not alter template block order automatically. Manual coverage and evidence limits are recorded in TESTING.md.
+
+Theme Check passed the snippet and both English locales; main-product retained its two inherited warnings. Locale JSON parsing and git diff whitespace checks passed. No new JavaScript or external dependency was introduced.
